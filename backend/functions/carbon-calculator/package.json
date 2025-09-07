@@ -1,0 +1,17 @@
+{
+  "name": "carbon-calculator",
+  "version": "1.0.0",
+  "description": "Carbon footprint calculation engine for EcoTrace",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.2.0"
+  }
+}

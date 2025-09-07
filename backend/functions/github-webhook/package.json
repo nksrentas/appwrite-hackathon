@@ -1,0 +1,18 @@
+{
+  "name": "github-webhook-processor",
+  "version": "1.0.0",
+  "description": "GitHub webhook processor for EcoTrace carbon tracking",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.2.0"
+  }
+}

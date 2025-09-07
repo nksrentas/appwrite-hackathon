@@ -1,0 +1,40 @@
+{
+  "name": "ecotrace",
+  "version": "1.0.0",
+  "description": "EcoTrace - Real-time carbon footprint tracking for developers",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspaces",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "deploy:backend": "npm run deploy --workspace=backend",
+    "test": "npm run test --workspaces",
+    "clean": "rm -rf node_modules backend/node_modules frontend/node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ecotrace/ecotrace.git"
+  },
+  "keywords": [
+    "carbon-tracking",
+    "sustainability",
+    "developer-tools",
+    "real-time",
+    "dashboard",
+    "appwrite",
+    "remix"
+  ],
+  "author": "EcoTrace Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

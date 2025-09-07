@@ -1,0 +1,509 @@
+{
+  "projectId": "ecotrace-dashboard",
+  "projectName": "EcoTrace Carbon Dashboard",
+  "functions": [
+    {
+      "name": "github-webhook",
+      "path": "functions/github-webhook",
+      "runtime": "node-18.0",
+      "entrypoint": "src/index.js",
+      "ignore": ["node_modules", ".npm"],
+      "execute": ["any"],
+      "events": [
+        "functions.github-webhook.execute"
+      ],
+      "schedule": "",
+      "timeout": 15,
+      "enabled": true,
+      "logging": true,
+      "vars": {},
+      "triggers": []
+    },
+    {
+      "name": "carbon-calculator",
+      "path": "functions/carbon-calculator",
+      "runtime": "node-18.0",
+      "entrypoint": "src/index.js",
+      "ignore": ["node_modules", ".npm"],
+      "execute": ["any"],
+      "events": [
+        "functions.carbon-calculator.execute"
+      ],
+      "schedule": "",
+      "timeout": 30,
+      "enabled": true,
+      "logging": true,
+      "vars": {},
+      "triggers": []
+    },
+    {
+      "name": "leaderboard-updater",
+      "path": "functions/leaderboard-updater",
+      "runtime": "node-18.0",
+      "entrypoint": "src/index.js",
+      "ignore": ["node_modules", ".npm"],
+      "execute": ["any"],
+      "events": [
+        "functions.leaderboard-updater.execute"
+      ],
+      "schedule": "0 */6 * * *",
+      "timeout": 60,
+      "enabled": true,
+      "logging": true,
+      "vars": {},
+      "triggers": []
+    },
+    {
+      "name": "api-integrations",
+      "path": "functions/api-integrations",
+      "runtime": "node-18.0",
+      "entrypoint": "src/index.js",
+      "ignore": ["node_modules", ".npm"],
+      "execute": ["any"],
+      "events": [
+        "functions.api-integrations.execute"
+      ],
+      "schedule": "",
+      "timeout": 30,
+      "enabled": true,
+      "logging": true,
+      "vars": {},
+      "triggers": []
+    }
+  ],
+  "databases": [
+    {
+      "name": "ecotrace-main",
+      "$id": "ecotrace-main",
+      "enabled": true
+    }
+  ],
+  "collections": [
+    {
+      "databaseId": "ecotrace-main",
+      "name": "users",
+      "$id": "users",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "github_id",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "username",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 100
+        },
+        {
+          "key": "email",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 320
+        },
+        {
+          "key": "avatar_url",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 500
+        },
+        {
+          "key": "location",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 1000
+        },
+        {
+          "key": "preferences",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "onboarding_completed",
+          "type": "boolean",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "default": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_github_id",
+          "type": "unique",
+          "attributes": ["github_id"]
+        },
+        {
+          "key": "idx_username",
+          "type": "key",
+          "attributes": ["username"]
+        },
+        {
+          "key": "idx_email",
+          "type": "unique",
+          "attributes": ["email"]
+        }
+      ]
+    },
+    {
+      "databaseId": "ecotrace-main",
+      "name": "activities",
+      "$id": "activities",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "user_id",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "type",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "repository",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "commit",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 5000
+        },
+        {
+          "key": "ci_data",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "local_data",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "carbon_kg",
+          "type": "double",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "calculation_confidence",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 20
+        },
+        {
+          "key": "timestamp",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_user_timestamp",
+          "type": "key",
+          "attributes": ["user_id", "timestamp"]
+        },
+        {
+          "key": "idx_type_timestamp",
+          "type": "key",
+          "attributes": ["type", "timestamp"]
+        },
+        {
+          "key": "idx_timestamp",
+          "type": "key",
+          "attributes": ["timestamp"]
+        }
+      ]
+    },
+    {
+      "databaseId": "ecotrace-main",
+      "name": "calculations",
+      "$id": "calculations",
+      "enabled": true,
+      "documentSecurity": true,
+      "attributes": [
+        {
+          "key": "activity_id",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "emission_factors",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "energy_breakdown",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "methodology_version",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "calculation_timestamp",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "raw_data",
+          "type": "string",
+          "status": "available",
+          "required": false,
+          "array": false,
+          "size": 10000
+        },
+        {
+          "key": "confidence_factors",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 1000
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_activity_id",
+          "type": "unique",
+          "attributes": ["activity_id"]
+        },
+        {
+          "key": "idx_calculation_timestamp",
+          "type": "key",
+          "attributes": ["calculation_timestamp"]
+        }
+      ]
+    },
+    {
+      "databaseId": "ecotrace-main",
+      "name": "leaderboards",
+      "$id": "leaderboards",
+      "enabled": true,
+      "documentSecurity": false,
+      "attributes": [
+        {
+          "key": "user_id",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 50
+        },
+        {
+          "key": "period_type",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 20
+        },
+        {
+          "key": "period_start",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "period_end",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "metrics",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "rank",
+          "type": "integer",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "total_participants",
+          "type": "integer",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "percentile",
+          "type": "double",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "last_updated",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_period_rank",
+          "type": "key",
+          "attributes": ["period_type", "rank"]
+        },
+        {
+          "key": "idx_user_period",
+          "type": "key",
+          "attributes": ["user_id", "period_type"]
+        },
+        {
+          "key": "idx_last_updated",
+          "type": "key",
+          "attributes": ["last_updated"]
+        }
+      ]
+    },
+    {
+      "databaseId": "ecotrace-main",
+      "name": "emission_factors",
+      "$id": "emission_factors",
+      "enabled": true,
+      "documentSecurity": false,
+      "attributes": [
+        {
+          "key": "region",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 1000
+        },
+        {
+          "key": "factor_kg_co2_per_kwh",
+          "type": "double",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "renewable_percentage",
+          "type": "double",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "source",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 2000
+        },
+        {
+          "key": "valid_from",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "valid_until",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "last_updated",
+          "type": "datetime",
+          "status": "available",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "confidence_rating",
+          "type": "string",
+          "status": "available",
+          "required": true,
+          "array": false,
+          "size": 20
+        }
+      ],
+      "indexes": [
+        {
+          "key": "idx_region_valid",
+          "type": "key",
+          "attributes": ["region", "valid_from", "valid_until"]
+        },
+        {
+          "key": "idx_last_updated",
+          "type": "key",
+          "attributes": ["last_updated"]
+        }
+      ]
+    }
+  ]
+}

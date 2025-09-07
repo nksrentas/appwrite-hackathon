@@ -1,0 +1,19 @@
+{
+  "name": "api-integrations",
+  "version": "1.0.0",
+  "description": "External API integration service for EcoTrace carbon data",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0",
+    "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/node-fetch": "^3.0.0",
+    "typescript": "^5.2.0"
+  }
+}

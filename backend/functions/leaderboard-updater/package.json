@@ -1,0 +1,18 @@
+{
+  "name": "leaderboard-updater",
+  "version": "1.0.0",
+  "description": "Leaderboard calculation and update service for EcoTrace",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "node-appwrite": "^13.0.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.2.0"
+  }
+}
