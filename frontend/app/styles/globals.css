@@ -1,0 +1,157 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142.1 76.2% 36.3%;
+    --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* EcoTrace specific custom properties */
+    --carbon-intensity-low: 142.1 76.2% 36.3%; /* Green */
+    --carbon-intensity-medium: 43 96% 56%; /* Yellow */
+    --carbon-intensity-high: 0 84.2% 60.2%; /* Red */
+    
+    --shadow-green: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
+    --shadow-carbon: 0 4px 14px 0 rgba(17, 24, 39, 0.1);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* EcoTrace specific global styles */
+  .carbon-glow {
+    box-shadow: var(--shadow-green);
+  }
+
+  .carbon-shadow {
+    box-shadow: var(--shadow-carbon);
+  }
+
+  /* Accessibility improvements */
+  .focus-visible:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Touch target improvements */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 0 0% 20%;
+      --input: 0 0% 20%;
+    }
+  }
+}
+
+/* Component-specific utility classes */
+@layer components {
+  .dashboard-card {
+    @apply bg-card text-card-foreground rounded-lg border carbon-shadow;
+  }
+
+  .metric-display {
+    @apply text-display-lg font-bold tracking-tight;
+  }
+
+  .metric-label {
+    @apply text-body-sm text-muted-foreground uppercase tracking-wide;
+  }
+
+  .activity-item {
+    @apply flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors;
+  }
+
+  .carbon-badge {
+    @apply inline-flex items-center rounded-full px-2 py-1 text-caption font-medium;
+  }
+
+  .carbon-badge-low {
+    @apply carbon-badge bg-primary-100 text-primary-600;
+  }
+
+  .carbon-badge-medium {
+    @apply carbon-badge bg-efficiency-100 text-efficiency-600;
+  }
+
+  .carbon-badge-high {
+    @apply carbon-badge bg-danger-100 text-danger-600;
+  }
+
+  .loading-skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  .glassmorphism {
+    @apply backdrop-blur-sm bg-background/80 border border-border/50;
+  }
+}

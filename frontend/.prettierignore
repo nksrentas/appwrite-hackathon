@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+build/
+dist/
+.cache/
+public/build/
+.output/
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+*.lcov
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Generated files
+*.min.js
+*.min.css
+
+# Config files that shouldn't be formatted
+tsconfig.json
+tsconfig.*.json
+
+# Markdown files (optional, remove if you want to format markdown)
+# *.md
