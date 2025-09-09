@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Wifi, WifiOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { cn } from '~/utils/cn';
+import { cn } from '~/shared/utils/cn';
 
 interface ConnectionStatusProps {
   isConnected: boolean;

@@ -3,7 +3,9 @@ import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { useEffect } from 'react';
 import { Github, Leaf, BarChart, Users, Shield, Zap } from 'lucide-react';
-import { useAuthStore } from '../stores/auth.store';
+import { useAuthStore } from '~/features/auth/stores/auth.store';
+import { Button } from '~/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/shared/components/ui/card';
 
 export const meta: MetaFunction = () => {
   return [
@@ -133,14 +135,15 @@ export default function Index() {
               </div>
             )}
 
-            <button
+            <Button
               onClick={handleSignIn}
               disabled={isLoading}
-              className="inline-flex items-center px-8 py-4 bg-carbon-900 text-white text-body-lg font-medium rounded-xl hover:bg-carbon-800 focus:outline-none focus:ring-4 focus:ring-carbon-300 transition-all duration-200 carbon-shadow disabled:opacity-50 disabled:cursor-not-allowed touch-target"
+              size="lg"
+              className="px-8 py-4 text-lg font-medium carbon-shadow"
             >
               {isLoading ? (
                 <>
-                  <div className="animate-spin -ml-1 mr-3 h-5 w-5 text-white">
+                  <div className="animate-spin -ml-1 mr-3 h-5 w-5">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
                       <circle
                         className="opacity-25"
@@ -165,7 +168,7 @@ export default function Index() {
                   Sign in with GitHub
                 </>
               )}
-            </button>
+            </Button>
           </div>
 
           <div className="flex items-center justify-center space-x-4 text-body-sm text-carbon-500">
@@ -187,22 +190,21 @@ export default function Index() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <div
-                key={index}
-                className="dashboard-card p-6 hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary-100 p-3 rounded-lg flex-shrink-0">
-                    <Icon className="h-6 w-6 text-primary-600" />
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-primary-100 p-3 rounded-lg flex-shrink-0">
+                      <Icon className="h-6 w-6 text-primary-600" />
+                    </div>
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+                      <CardDescription className="text-body-sm leading-relaxed">
+                        {feature.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-carbon-900 mb-2">{feature.title}</h3>
-                    <p className="text-carbon-600 text-body-sm leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                </CardHeader>
+              </Card>
             );
           })}
         </div>

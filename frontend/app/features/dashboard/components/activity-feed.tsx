@@ -1,15 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { GitCommit, GitPullRequest, Zap, Package, Clock, MapPin, ExternalLink } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { Badge } from '~/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
+import { Badge } from '~/shared/components/ui/badge';
 import {
   formatCarbon,
   getCarbonIntensity,
   getCarbonIntensityClasses,
   getRelativeTime,
-} from '~/utils/carbon';
-import type { AppwriteActivity } from '~/services/appwrite.client';
-import { cn } from '~/utils/cn';
+} from '~/shared/utils/carbon';
+import type { AppwriteActivity } from '~/shared/services/appwrite.client';
+import { cn } from '~/shared/utils/cn';
 
 interface ActivityFeedProps {
   activities: AppwriteActivity[];

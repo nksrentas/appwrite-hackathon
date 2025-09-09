@@ -1,10 +1,6 @@
 import { Client, Account, Databases, Functions } from 'appwrite';
 
-/**
- * Appwrite client configuration for EcoTrace
- */
 
-// Client configuration
 const client = new Client();
 
 if (typeof window !== 'undefined') {
@@ -13,24 +9,18 @@ if (typeof window !== 'undefined') {
 
   client.setEndpoint(endpoint).setProject(projectId);
 } else {
-  // Server-side configuration
   client
     .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1')
     .setProject(process.env.APPWRITE_PROJECT_ID || '');
 }
 
-// Service instances
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const functions = new Functions(client);
-// Realtime will be initialized separately when needed
 export const realtime: any = null;
 
 export { client };
 
-/**
- * Database and Collection IDs
- */
 export const DATABASE_ID = 'ecotrace_main';
 
 export const COLLECTIONS = {
@@ -41,9 +31,6 @@ export const COLLECTIONS = {
   EMISSION_FACTORS: 'emission_factors',
 } as const;
 
-/**
- * Real-time subscription channels
- */
 export const CHANNELS = {
   USER_CARBON: (userId: string) => `user.${userId}.carbon`,
   USER_ACTIVITIES: (userId: string) => `user.${userId}.activities`,
@@ -53,9 +40,6 @@ export const CHANNELS = {
   ACTIVITIES_GLOBAL: 'activities.global',
 } as const;
 
-/**
- * Function IDs for serverless functions
- */
 export const FUNCTIONS_IDS = {
   CALCULATE_CARBON: 'calculate_carbon',
   UPDATE_LEADERBOARD: 'update_leaderboard',
@@ -63,16 +47,10 @@ export const FUNCTIONS_IDS = {
   WEBHOOK_HANDLER: 'webhook_handler',
 } as const;
 
-/**
- * OAuth provider configuration
- */
 export const OAUTH_PROVIDERS = {
   GITHUB: 'github',
 } as const;
 
-/**
- * Type definitions for Appwrite documents
- */
 export interface AppwriteUser {
   $id: string;
   $createdAt: string;

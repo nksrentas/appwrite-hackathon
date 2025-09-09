@@ -1,13 +1,10 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { dataService } from '~/services/data.service';
-import { realtimeService } from '~/services/realtime.service';
-import type { AppwriteActivity } from '~/services/appwrite.client';
-import type { CarbonUpdatePayload, ActivityUpdatePayload } from '~/services/realtime.service';
+import { dataService } from '../services/data.service';
+import { realtimeService } from '../services/realtime.service';
+import type { AppwriteActivity } from '~/shared/services/appwrite.client';
+import type { CarbonUpdatePayload, ActivityUpdatePayload } from '../services/realtime.service';
 
-/**
- * Dashboard state management store with real-time updates
- */
 
 export interface DashboardMetrics {
   totalCarbon: number;
@@ -21,7 +18,6 @@ export interface DashboardMetrics {
 }
 
 export interface DashboardState {
-  // State
   metrics: DashboardMetrics | null;
   recentActivities: AppwriteActivity[];
   isLoading: boolean;
@@ -29,10 +25,8 @@ export interface DashboardState {
   error: string | null;
   lastActivity: ActivityUpdatePayload | null;
 
-  // Real-time subscriptions
   subscriptions: Set<string>;
 
-  // Actions
   loadDashboard: (userId: string) => Promise<void>;
   subscribeToRealTimeUpdates: (userId: string) => void;
   unsubscribeFromRealTimeUpdates: () => void;
@@ -46,7 +40,6 @@ export interface DashboardState {
 export const useDashboardStore = create<DashboardState>()(
   devtools(
     (set, get) => ({
-      // Initial state
       metrics: null,
       recentActivities: [],
       isLoading: false,
@@ -55,7 +48,6 @@ export const useDashboardStore = create<DashboardState>()(
       lastActivity: null,
       subscriptions: new Set(),
 
-      // Actions
       loadDashboard: async (userId: string) => {
         try {
           set({ isLoading: true, error: null });
@@ -88,13 +80,11 @@ export const useDashboardStore = create<DashboardState>()(
       subscribeToRealTimeUpdates: (userId: string) => {
         const state = get();
 
-        // Avoid duplicate subscriptions
         if (state.subscriptions.has(userId)) {
           return;
         }
 
         try {
-          // Subscribe to carbon updates
           const carbonUnsubscribe = realtimeService.subscribeToUserCarbon(
             userId,
             (update: CarbonUpdatePayload) => {
@@ -106,7 +96,6 @@ export const useDashboardStore = create<DashboardState>()(
             }
           );
 
-          // Subscribe to activity updates
           const activityUnsubscribe = realtimeService.subscribeToUserActivities(
             userId,
             (activity: ActivityUpdatePayload) => {
@@ -118,15 +107,12 @@ export const useDashboardStore = create<DashboardState>()(
             }
           );
 
-          // Subscribe to connection status
           const statusUnsubscribe = realtimeService.onConnectionStatusChange((status) => {
             set({ isConnected: status === 'connected' });
           });
 
-          // Store subscription cleanup functions
           state.subscriptions.add(userId);
 
-          // Store cleanup functions for later use
           (get() as any).cleanupFunctions = {
             ...(get() as any).cleanupFunctions,
             [userId]: () => {
@@ -150,7 +136,6 @@ export const useDashboardStore = create<DashboardState>()(
       unsubscribeFromRealTimeUpdates: () => {
         const cleanupFunctions = (get() as any).cleanupFunctions || {};
 
-        // Call all cleanup functions
         Object.values(cleanupFunctions).forEach((cleanup: any) => {
           if (typeof cleanup === 'function') {
             cleanup();
@@ -162,7 +147,6 @@ export const useDashboardStore = create<DashboardState>()(
           isConnected: false,
         });
 
-        // Clear cleanup functions
         (get() as any).cleanupFunctions = {};
       },
 
@@ -170,7 +154,6 @@ export const useDashboardStore = create<DashboardState>()(
         const state = get();
         if (!state.metrics) return;
 
-        // Update metrics with new carbon data
         const updatedMetrics: DashboardMetrics = {
           ...state.metrics,
           totalCarbon: state.metrics.totalCarbon + update.carbonValue,
@@ -187,7 +170,6 @@ export const useDashboardStore = create<DashboardState>()(
       handleActivityUpdate: (activity: ActivityUpdatePayload) => {
         const state = get();
 
-        // Add new activity to the recent activities list
         const updatedActivities = [
           {
             $id: activity.id,

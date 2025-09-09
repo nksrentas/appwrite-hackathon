@@ -5,9 +5,6 @@ import { realtimeService } from '~/services/realtime.service';
 import type { AppwriteLeaderboard } from '~/services/appwrite.client';
 import type { LeaderboardUpdatePayload } from '~/services/realtime.service';
 
-/**
- * Leaderboard state management store with real-time updates
- */
 
 export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'all_time';
 
@@ -31,7 +28,6 @@ export interface UserPosition {
 }
 
 export interface LeaderboardState {
-  // State
   leaderboards: Record<LeaderboardPeriod, AppwriteLeaderboard | null>;
   currentPeriod: LeaderboardPeriod;
   userPosition: Record<LeaderboardPeriod, UserPosition | null>;
@@ -39,10 +35,8 @@ export interface LeaderboardState {
   error: string | null;
   lastUpdated: Record<LeaderboardPeriod, string>;
 
-  // Real-time subscriptions
   subscriptions: Set<LeaderboardPeriod>;
 
-  // Actions
   loadLeaderboard: (period: LeaderboardPeriod) => Promise<void>;
   loadUserPosition: (userId: string, period: LeaderboardPeriod) => Promise<void>;
   setPeriod: (period: LeaderboardPeriod) => void;
@@ -56,7 +50,6 @@ export interface LeaderboardState {
 export const useLeaderboardStore = create<LeaderboardState>()(
   devtools(
     (set, get) => ({
-      // Initial state
       leaderboards: {
         daily: null,
         weekly: null,
@@ -80,7 +73,6 @@ export const useLeaderboardStore = create<LeaderboardState>()(
       },
       subscriptions: new Set(),
 
-      // Actions
       loadLeaderboard: async (period: LeaderboardPeriod) => {
         try {
           set({ isLoading: true, error: null });
@@ -126,14 +118,12 @@ export const useLeaderboardStore = create<LeaderboardState>()(
           }
         } catch (error) {
           console.error('Failed to load user position:', error);
-          // Don't throw here as this is supplementary data
         }
       },
 
       setPeriod: (period: LeaderboardPeriod) => {
         set({ currentPeriod: period });
 
-        // Load data for new period if not already loaded
         const state = get();
         if (!state.leaderboards[period]) {
           state.loadLeaderboard(period);
@@ -143,7 +133,6 @@ export const useLeaderboardStore = create<LeaderboardState>()(
       subscribeToRealTimeUpdates: (period: LeaderboardPeriod) => {
         const state = get();
 
-        // Avoid duplicate subscriptions
         if (state.subscriptions.has(period)) {
           return;
         }
@@ -162,12 +151,10 @@ export const useLeaderboardStore = create<LeaderboardState>()(
             }
           );
 
-          // Store subscription
           set((state) => ({
             subscriptions: new Set([...state.subscriptions, period]),
           }));
 
-          // Store cleanup function
           (get() as any).cleanupFunctions = {
             ...(get() as any).cleanupFunctions,
             [period]: unsubscribe,
@@ -187,7 +174,6 @@ export const useLeaderboardStore = create<LeaderboardState>()(
         const cleanupFunctions = (get() as any).cleanupFunctions || {};
 
         if (period) {
-          // Unsubscribe from specific period
           const cleanup = cleanupFunctions[period];
           if (typeof cleanup === 'function') {
             cleanup();
@@ -200,7 +186,6 @@ export const useLeaderboardStore = create<LeaderboardState>()(
             return { subscriptions: newSubscriptions };
           });
         } else {
-          // Unsubscribe from all periods
           Object.values(cleanupFunctions).forEach((cleanup: any) => {
             if (typeof cleanup === 'function') {
               cleanup();
@@ -215,7 +200,6 @@ export const useLeaderboardStore = create<LeaderboardState>()(
       handleLeaderboardUpdate: (update: LeaderboardUpdatePayload) => {
         const period = update.period as LeaderboardPeriod;
 
-        // Create updated leaderboard object
         const updatedLeaderboard: AppwriteLeaderboard = {
           $id: `${period}-${Date.now()}`,
           $createdAt: update.lastUpdated,

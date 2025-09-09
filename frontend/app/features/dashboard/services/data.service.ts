@@ -1,7 +1,3 @@
-/**
- * Data service for EcoTrace API interactions
- * Simplified mock version for development
- */
 
 export interface PaginatedResponse<T> {
   documents: T[];
@@ -29,7 +25,6 @@ export interface ActivityFilters {
   offset?: number;
 }
 
-// Mock activity data
 const mockActivities = [
   {
     $id: '1',
@@ -81,12 +76,8 @@ const mockActivities = [
 class DataService {
   private mockMode = true; // Enable mock mode for development
 
-  /**
-   * Get user profile data
-   */
   async getUserProfile(userId: string) {
     if (this.mockMode) {
-      // Return mock user data
       return {
         $id: userId,
         $createdAt: new Date(Date.now() - 86400000).toISOString(),
@@ -114,21 +105,14 @@ class DataService {
     return null;
   }
 
-  /**
-   * Update user profile
-   */
   async updateUserProfile(userId: string, data: any) {
     if (this.mockMode) {
-      // Mock update
       return { ...(await this.getUserProfile(userId)), ...data };
     }
 
     throw new Error('Failed to update user profile');
   }
 
-  /**
-   * Get user activities with pagination and filtering
-   */
   async getUserActivities(
     userId: string,
     filters: ActivityFilters = {}
@@ -137,7 +121,6 @@ class DataService {
       const limit = filters.limit || 50;
       const offset = filters.offset || 0;
 
-      // Filter activities based on filters
       let filteredActivities = mockActivities;
 
       if (filters.type && filters.type.length > 0) {
@@ -163,9 +146,6 @@ class DataService {
     throw new Error('Failed to get user activities');
   }
 
-  /**
-   * Get carbon analytics for user
-   */
   async getCarbonAnalytics(userId: string): Promise<CarbonAnalytics> {
     if (this.mockMode) {
       return {
@@ -182,9 +162,6 @@ class DataService {
     throw new Error('Failed to get carbon analytics');
   }
 
-  /**
-   * Get historical carbon data for charts
-   */
   async getCarbonHistory(userId: string, period: 'week' | 'month' | 'quarter' = 'month') {
     if (this.mockMode) {
       const data = [];
@@ -207,9 +184,6 @@ class DataService {
     throw new Error('Failed to get carbon history');
   }
 
-  /**
-   * Get leaderboard data
-   */
   async getLeaderboard(period: 'daily' | 'weekly' | 'monthly' | 'all_time' = 'daily') {
     if (this.mockMode) {
       return {
@@ -254,9 +228,6 @@ class DataService {
     return null;
   }
 
-  /**
-   * Get user's position in leaderboard
-   */
   async getUserLeaderboardPosition(
     userId: string,
     period: 'daily' | 'weekly' | 'monthly' | 'all_time' = 'daily'
@@ -273,9 +244,6 @@ class DataService {
     return null;
   }
 
-  /**
-   * Get calculation details for transparency
-   */
   async getCalculationDetails(activityId: string) {
     if (this.mockMode) {
       return [
@@ -303,9 +271,6 @@ class DataService {
     throw new Error('Failed to get calculation details');
   }
 
-  /**
-   * Get emission factors for transparency
-   */
   async getEmissionFactors(region?: string) {
     if (this.mockMode) {
       return [
@@ -332,12 +297,8 @@ class DataService {
     throw new Error('Failed to get emission factors');
   }
 
-  /**
-   * Trigger manual GitHub sync
-   */
   async syncGitHubData(userId: string): Promise<{ success: boolean; message: string }> {
     if (this.mockMode) {
-      // Simulate sync delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       return {
@@ -349,9 +310,6 @@ class DataService {
     throw new Error('Failed to sync GitHub data');
   }
 
-  /**
-   * Get repository list for user
-   */
   async getUserRepositories(userId: string): Promise<string[]> {
     if (this.mockMode) {
       return ['ecotrace/dashboard', 'ecotrace/backend', 'example/repo'];
@@ -360,12 +318,8 @@ class DataService {
     return [];
   }
 
-  /**
-   * Update repository tracking settings
-   */
   async updateRepositoryTracking(userId: string, repositories: string[]): Promise<void> {
     if (this.mockMode) {
-      // Mock update
       console.log('Updated repositories:', repositories);
       return;
     }
@@ -373,15 +327,11 @@ class DataService {
     throw new Error('Failed to update repository tracking');
   }
 
-  /**
-   * Get global activity feed (public activities)
-   */
   async getGlobalActivities(
     limit: number = 20,
     offset: number = 0
   ): Promise<PaginatedResponse<any>> {
     if (this.mockMode) {
-      // Return some of the mock activities as global
       const globalActivities = mockActivities.slice(offset, offset + limit);
 
       return {
@@ -395,9 +345,6 @@ class DataService {
     throw new Error('Failed to get global activities');
   }
 
-  /**
-   * Get dashboard summary data
-   */
   async getDashboardSummary(userId: string): Promise<{
     totalCarbon: number;
     todayCarbon: number;
@@ -436,5 +383,4 @@ class DataService {
   }
 }
 
-// Export singleton instance
 export const dataService = new DataService();

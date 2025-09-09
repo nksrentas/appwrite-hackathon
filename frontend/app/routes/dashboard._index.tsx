@@ -16,14 +16,14 @@ import {
   Target,
 } from 'lucide-react';
 
-import { useAuthStore } from '~/stores/auth.store';
-import { useDashboardStore } from '~/stores/dashboard.store';
-import { CarbonMetricCard } from '~/components/dashboard/carbon-metric-card';
-import { ActivityFeed } from '~/components/dashboard/activity-feed';
-import { ConnectionStatus } from '~/components/dashboard/connection-status';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { Button } from '~/components/ui/button';
-import { Badge } from '~/components/ui/badge';
+import { useAuthStore } from '~/features/auth/stores/auth.store';
+import { useDashboardStore } from '~/features/dashboard/stores/dashboard.store';
+import { CarbonMetricCard } from '~/features/dashboard/components/carbon-metric-card';
+import { ActivityFeed } from '~/features/dashboard/components/activity-feed';
+import { ConnectionStatus } from '~/features/dashboard/components/connection-status';
+import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
+import { Button } from '~/shared/components/ui/button';
+import { Badge } from '~/shared/components/ui/badge';
 
 export const meta: MetaFunction = () => {
   return [
@@ -33,11 +33,8 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // In a real app, we'd check authentication server-side
-  // For now, we'll handle it client-side with the auth store
 
   return json({
-    // Mock data for development
     mockMode: process.env.NODE_ENV === 'development',
   });
 }
@@ -61,12 +58,10 @@ export default function Dashboard() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // Check authentication on mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Load dashboard data when user is authenticated
   useEffect(() => {
     if (user && isAuthenticated) {
       loadDashboard(user.$id);
@@ -84,7 +79,6 @@ export default function Dashboard() {
     unsubscribeFromRealTimeUpdates,
   ]);
 
-  // Handle manual refresh
   const handleRefresh = async () => {
     if (!user) return;
 
@@ -98,7 +92,6 @@ export default function Dashboard() {
     }
   };
 
-  // Handle reconnection
   const handleReconnect = () => {
     if (user) {
       clearError();
@@ -106,7 +99,6 @@ export default function Dashboard() {
     }
   };
 
-  // Redirect if not authenticated
   if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">

@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Leaf, Zap, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { Badge } from '~/components/ui/badge';
-import { formatCarbon, getCarbonIntensity, getCarbonIntensityClasses } from '~/utils/carbon';
-import { cn } from '~/utils/cn';
+import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
+import { Badge } from '~/shared/components/ui/badge';
+import { formatCarbon, getCarbonIntensity, getCarbonIntensityClasses } from '~/shared/utils/carbon';
+import { cn } from '~/shared/utils/cn';
 
 interface CarbonMetricCardProps {
   title: string;

@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useEffect } from 'react';
-import { useAuthStore } from '../stores/auth.store';
+import { useAuthStore } from '~/features/auth/stores/auth.store';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
