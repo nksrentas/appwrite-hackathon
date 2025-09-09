@@ -1,157 +1,364 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142.1 76.2% 36.3%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142.1 76.2% 36.3%;
-    --radius: 0.75rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-
-    /* EcoTrace specific custom properties */
-    --carbon-intensity-low: 142.1 76.2% 36.3%; /* Green */
-    --carbon-intensity-medium: 43 96% 56%; /* Yellow */
-    --carbon-intensity-high: 0 84.2% 60.2%; /* Red */
-    
-    --shadow-green: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
-    --shadow-carbon: 0 4px 14px 0 rgba(17, 24, 39, 0.1);
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142.1 70.6% 45.3%;
-    --primary-foreground: 144.9 80.4% 10%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142.4 71.8% 29.2%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
+/* Theme configuration using Tailwind v4 @theme directive */
+@theme {
+  /* Colors mapped from your OKLCH values */
+  --color-background: oklch(0.9911 0 0);
+  --color-foreground: oklch(0.2046 0 0);
+  --color-card: oklch(0.9911 0 0);
+  --color-card-foreground: oklch(0.2046 0 0);
+  --color-popover: oklch(0.9911 0 0);
+  --color-popover-foreground: oklch(0.4386 0 0);
+  --color-primary: oklch(0.8348 0.1302 160.9080);
+  --color-primary-foreground: oklch(0.2626 0.0147 166.4589);
+  --color-secondary: oklch(0.9940 0 0);
+  --color-secondary-foreground: oklch(0.2046 0 0);
+  --color-muted: oklch(0.9461 0 0);
+  --color-muted-foreground: oklch(0.2435 0 0);
+  --color-accent: oklch(0.9461 0 0);
+  --color-accent-foreground: oklch(0.2435 0 0);
+  --color-destructive: oklch(0.5523 0.1927 32.7272);
+  --color-destructive-foreground: oklch(0.9934 0.0032 17.2118);
+  --color-border: oklch(0.9037 0 0);
+  --color-input: oklch(0.9731 0 0);
+  --color-ring: oklch(0.8348 0.1302 160.9080);
   
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+  /* Chart colors */
+  --color-chart-1: oklch(0.8348 0.1302 160.9080);
+  --color-chart-2: oklch(0.6231 0.1880 259.8145);
+  --color-chart-3: oklch(0.6056 0.2189 292.7172);
+  --color-chart-4: oklch(0.7686 0.1647 70.0804);
+  --color-chart-5: oklch(0.6959 0.1491 162.4796);
+  
+  /* Primary color scale */
+  --color-primary-50: oklch(0.98 0.015 162);
+  --color-primary-100: oklch(0.95 0.03 162);
+  --color-primary-200: oklch(0.91 0.06 162);
+  --color-primary-300: oklch(0.86 0.09 161);
+  --color-primary-400: oklch(0.78 0.11 161);
+  --color-primary-500: oklch(0.8348 0.1302 160.9080);
+  --color-primary-600: oklch(0.73 0.11 161);
+  --color-primary-700: oklch(0.63 0.10 159);
+  --color-primary-800: oklch(0.53 0.09 157);
+  --color-primary-900: oklch(0.43 0.09 157);
+  
+  /* Carbon/gray scale */
+  --color-carbon-50: oklch(0.98 0.002 255);
+  --color-carbon-100: oklch(0.96 0.004 255);
+  --color-carbon-200: oklch(0.92 0.008 255);
+  --color-carbon-300: oklch(0.86 0.012 255);
+  --color-carbon-400: oklch(0.72 0.016 255);
+  --color-carbon-500: oklch(0.58 0.020 255);
+  --color-carbon-600: oklch(0.46 0.016 255);
+  --color-carbon-700: oklch(0.36 0.012 255);
+  --color-carbon-800: oklch(0.26 0.008 255);
+  --color-carbon-900: oklch(0.18 0.004 255);
+  
+  /* Scientific blue scale */
+  --color-scientific-50: oklch(0.97 0.015 260);
+  --color-scientific-100: oklch(0.94 0.030 260);
+  --color-scientific-500: oklch(0.6231 0.1880 259.8145);
+  --color-scientific-600: oklch(0.56 0.168 260);
+  --color-scientific-700: oklch(0.50 0.148 260);
+  
+  /* Efficiency yellow/gold scale */
+  --color-efficiency-50: oklch(0.98 0.015 70);
+  --color-efficiency-100: oklch(0.95 0.030 70);
+  --color-efficiency-500: oklch(0.7686 0.1647 70.0804);
+  --color-efficiency-600: oklch(0.71 0.145 70);
+  --color-efficiency-700: oklch(0.61 0.125 70);
+  
+  /* Danger/error red scale */
+  --color-danger-50: oklch(0.97 0.015 33);
+  --color-danger-100: oklch(0.94 0.030 33);
+  --color-danger-500: oklch(0.5523 0.1927 32.7272);
+  --color-danger-600: oklch(0.49 0.173 33);
+  --color-danger-700: oklch(0.43 0.153 33);
+  --color-danger: oklch(0.5523 0.1927 32.7272);
+  
+  /* Font configuration */
+  --font-family-sans: Outfit, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", monospace;
+  
+  /* Border radius */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+  
+  /* Custom shadow definitions */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.1), 0 8px 10px -6px oklch(0 0 0 / 0.1);
+}
 
-  /* EcoTrace specific global styles */
-  .carbon-glow {
-    box-shadow: var(--shadow-green);
-  }
+/* Dark theme overrides */
+.dark {
+  --color-background: oklch(0.1822 0 0);
+  --color-foreground: oklch(0.9288 0.0126 255.5078);
+  --color-card: oklch(0.2046 0 0);
+  --color-card-foreground: oklch(0.9288 0.0126 255.5078);
+  --color-popover: oklch(0.2603 0 0);
+  --color-popover-foreground: oklch(0.7348 0 0);
+  --color-primary: oklch(0.4365 0.1044 156.7556);
+  --color-primary-foreground: oklch(0.9213 0.0135 167.1556);
+  --color-secondary: oklch(0.2603 0 0);
+  --color-secondary-foreground: oklch(0.9851 0 0);
+  --color-muted: oklch(0.2393 0 0);
+  --color-muted-foreground: oklch(0.7122 0 0);
+  --color-accent: oklch(0.3132 0 0);
+  --color-accent-foreground: oklch(0.9851 0 0);
+  --color-destructive: oklch(0.3123 0.0852 29.7877);
+  --color-destructive-foreground: oklch(0.9368 0.0045 34.3092);
+  --color-border: oklch(0.2809 0 0);
+  --color-input: oklch(0.2603 0 0);
+  --color-ring: oklch(0.8003 0.1821 151.7110);
+  
+  --color-chart-1: oklch(0.8003 0.1821 151.7110);
+  --color-chart-2: oklch(0.7137 0.1434 254.6240);
+  --color-chart-3: oklch(0.7090 0.1592 293.5412);
+  --color-chart-4: oklch(0.8369 0.1644 84.4286);
+  --color-chart-5: oklch(0.7845 0.1325 181.9120);
+}
 
-  .carbon-shadow {
-    box-shadow: var(--shadow-carbon);
-  }
+/* CSS variables for runtime theming (backward compatibility) */
+:root {
+  --background: oklch(0.9911 0 0);
+  --foreground: oklch(0.2046 0 0);
+  --primary: oklch(0.8348 0.1302 160.9080);
+  --primary-foreground: oklch(0.2626 0.0147 166.4589);
+  --radius: 0.5rem;
+  --shadow-green: 0 4px 14px 0 rgba(134, 239, 172, 0.25);
+  --shadow-carbon: 0 4px 14px 0 rgba(17, 24, 39, 0.1);
+}
 
-  /* Accessibility improvements */
-  .focus-visible:focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
-  }
+.dark {
+  --shadow-green: 0 4px 14px 0 rgba(52, 211, 153, 0.25);
+  --shadow-carbon: 0 4px 14px 0 rgba(17, 24, 39, 0.4);
+}
 
-  /* Touch target improvements */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
+/* Base styles */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-family-sans);
+  letter-spacing: 0.025em;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
 
-  /* Reduced motion support */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
+/* EcoTrace specific global styles */
+.carbon-glow {
+  box-shadow: var(--shadow-green);
+}
 
-  /* High contrast mode support */
-  @media (prefers-contrast: high) {
-    :root {
-      --border: 0 0% 20%;
-      --input: 0 0% 20%;
-    }
+.carbon-shadow {
+  box-shadow: var(--shadow-carbon);
+}
+
+/* Custom utility classes for legacy code compatibility */
+.text-display-lg {
+  font-size: 2.25rem;
+  line-height: 2.75rem;
+  font-weight: 700;
+}
+
+.text-display-md {
+  font-size: 1.875rem;
+  line-height: 2.375rem;
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-body-md {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-body-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* Custom component classes */
+.dashboard-card {
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  border-radius: var(--radius-lg);
+  border-width: 1px;
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-carbon);
+}
+
+.metric-display {
+  font-size: 2.25rem;
+  line-height: 2.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.activity-item:hover {
+  background-color: color-mix(in srgb, var(--color-muted) 50%, transparent);
+}
+
+/* Carbon badge variants */
+.carbon-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.carbon-badge-low {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary-600);
+}
+
+.carbon-badge-medium {
+  background-color: color-mix(in srgb, var(--color-efficiency-500) 10%, transparent);
+  color: var(--color-efficiency-600);
+}
+
+.carbon-badge-high {
+  background-color: color-mix(in srgb, var(--color-danger-500) 10%, transparent);
+  color: var(--color-danger-600);
+}
+
+/* Loading skeleton animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading-skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: var(--color-muted);
+  border-radius: var(--radius-md);
+}
+
+/* Glassmorphism effect */
+.glassmorphism {
+  backdrop-filter: blur(8px);
+  background-color: color-mix(in srgb, var(--color-background) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+}
+
+/* Accessibility improvements */
+.focus-visible:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-ring);
+}
+
+/* Touch target improvements */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-/* Component-specific utility classes */
-@layer components {
-  .dashboard-card {
-    @apply bg-card text-card-foreground rounded-lg border carbon-shadow;
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: oklch(0.7000 0 0);
+    --color-input: oklch(0.7000 0 0);
   }
+}
 
-  .metric-display {
-    @apply text-display-lg font-bold tracking-tight;
-  }
+/* Custom animations for EcoTrace */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-  .metric-label {
-    @apply text-body-sm text-muted-foreground uppercase tracking-wide;
+@keyframes slideUp {
+  from { 
+    transform: translateY(10px); 
+    opacity: 0; 
   }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
 
-  .activity-item {
-    @apply flex items-center space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors;
+@keyframes pulseGreen {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 70%, transparent);
   }
+  70% {
+    opacity: 0.9;
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
 
-  .carbon-badge {
-    @apply inline-flex items-center rounded-full px-2 py-1 text-caption font-medium;
+@keyframes carbonGlow {
+  0% { 
+    box-shadow: 0 0 5px color-mix(in srgb, var(--color-primary) 50%, transparent); 
   }
+  100% { 
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 80%, transparent); 
+  }
+}
 
-  .carbon-badge-low {
-    @apply carbon-badge bg-primary-100 text-primary-600;
-  }
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
 
-  .carbon-badge-medium {
-    @apply carbon-badge bg-efficiency-100 text-efficiency-600;
-  }
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
 
-  .carbon-badge-high {
-    @apply carbon-badge bg-danger-100 text-danger-600;
-  }
+.animate-pulse-green {
+  animation: pulseGreen 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
-  .loading-skeleton {
-    @apply animate-pulse bg-muted rounded;
-  }
+.animate-carbon-glow {
+  animation: carbonGlow 3s ease-in-out infinite alternate;
+}
 
-  .glassmorphism {
-    @apply backdrop-blur-sm bg-background/80 border border-border/50;
-  }
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
