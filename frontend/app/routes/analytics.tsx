@@ -82,6 +82,12 @@ export default function AnalyticsLayout() {
                 >
                   Leaderboard
                 </Link>
+                <Link
+                  to="/challenges"
+                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+                >
+                  Challenges
+                </Link>
               </nav>
             </div>
 
