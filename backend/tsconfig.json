@@ -22,6 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@features/*": ["./src/features/*"],
+      "@features/carbon-calculation/*": ["./src/features/carbon-calculation/*"],
       "@shared/*": ["./src/shared/*"],
       "@websocket/*": ["./src/websocket/*"],
       "@config/*": ["./src/shared/config/*"]
