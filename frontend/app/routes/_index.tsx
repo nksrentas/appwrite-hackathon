@@ -3,9 +3,9 @@ import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { useEffect } from 'react';
 import { Github, Leaf, BarChart, Users, Shield, Zap } from 'lucide-react';
-import { useAuthStore } from '~/features/auth/stores/auth.store';
-import { Button } from '~/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/shared/components/ui/card';
+import { useAuthStore } from '@features/auth/stores/auth.store';
+import { Button } from '@shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/components/ui/card';
 
 export const meta: MetaFunction = () => {
   return [

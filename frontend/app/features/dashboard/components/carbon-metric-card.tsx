@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Leaf, Zap, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
-import { Badge } from '~/shared/components/ui/badge';
-import { formatCarbon, getCarbonIntensity, getCarbonIntensityClasses } from '~/shared/utils/carbon';
-import { cn } from '~/shared/utils/cn';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
+import { Badge } from '@shared/components/ui/badge';
+import { formatCarbon, getCarbonIntensity, getCarbonIntensityClasses } from '@shared/utils/carbon';
+import { cn } from '@shared/utils/cn';
+import { generateAriaProps, useReducedMotion } from '@shared/utils/accessibility';
 
 interface CarbonMetricCardProps {
   title: string;
@@ -34,6 +35,15 @@ export const CarbonMetricCard = ({
 }: CarbonMetricCardProps) => {
   const intensity = getCarbonIntensity(value);
   const intensityClasses = getCarbonIntensityClasses(intensity);
+  const prefersReducedMotion = useReducedMotion();
+
+  const cardDescription = `${title}: ${formatCarbon(value, unit)}. Carbon intensity: ${intensity}.${
+    trend && trendValue !== undefined 
+      ? ` Trend: ${trend} by ${Math.abs(trendValue).toFixed(1)}% ${period}.`
+      : ''
+  }${isRealtime ? ' Updates in real-time.' : ''}`;
+
+  const liveRegionProps = isRealtime ? generateAriaProps.liveRegion('polite') : {};
 
   const getTrendIcon = () => {
     switch (trend) {
@@ -61,13 +71,18 @@ export const CarbonMetricCard = ({
 
   if (isLoading) {
     return (
-      <Card className={cn('relative', className)}>
+      <Card 
+        className={cn('relative', className)}
+        role="region"
+        aria-label={`${title} loading`}
+        aria-busy="true"
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-body-sm font-medium">{title}</CardTitle>
-          <div className="loading-skeleton h-4 w-4 rounded" />
+          <div className="loading-skeleton h-4 w-4 rounded" aria-hidden="true" />
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-2" aria-hidden="true">
             <div className="loading-skeleton h-8 w-24 rounded" />
             <div className="loading-skeleton h-4 w-16 rounded" />
           </div>
@@ -79,23 +94,30 @@ export const CarbonMetricCard = ({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={!prefersReducedMotion ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={!prefersReducedMotion ? { duration: 0.3 } : { duration: 0 }}
     >
-      <Card className={cn('relative overflow-hidden', className)}>
-        {/* Real-time indicator */}
+      <Card 
+        className={cn('relative overflow-hidden', className)}
+        role="region"
+        aria-label={cardDescription}
+        {...liveRegionProps}
+      >
         {isRealtime && (
           <motion.div
             className="absolute top-2 right-2 flex items-center space-x-1"
-            initial={{ opacity: 0 }}
+            initial={!prefersReducedMotion ? { opacity: 0 } : { opacity: 1 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
+            transition={!prefersReducedMotion ? { delay: 0.2 } : { duration: 0 }}
+            role="status"
+            aria-label="Real-time updates enabled"
           >
             <motion.div
               className="h-2 w-2 bg-primary-500 rounded-full"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
+              animate={!prefersReducedMotion ? { scale: [1, 1.2, 1] } : {}}
+              transition={!prefersReducedMotion ? { repeat: Infinity, duration: 2 } : {}}
+              aria-hidden="true"
             />
             <span className="text-caption text-carbon-500">Live</span>
           </motion.div>
@@ -108,11 +130,10 @@ export const CarbonMetricCard = ({
 
         <CardContent>
           <div className="space-y-3">
-            {/* Main metric */}
             <div className="flex items-baseline space-x-2">
               <motion.div
                 className="metric-display text-carbon-900"
-                key={value} // Re-trigger animation on value change
+                key={value}
                 initial={{ opacity: 0.7, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -120,11 +141,9 @@ export const CarbonMetricCard = ({
                 {formatCarbon(value, unit)}
               </motion.div>
 
-              {/* Carbon intensity badge */}
               <Badge className={intensityClasses}>{intensity}</Badge>
             </div>
 
-            {/* Trend information */}
             {trend && trendValue !== undefined && (
               <div className="flex items-center space-x-2">
                 <div className={cn('flex items-center space-x-1', getTrendColor())}>
@@ -137,7 +156,6 @@ export const CarbonMetricCard = ({
               </div>
             )}
 
-            {/* Last updated timestamp */}
             {lastUpdated && (
               <div className="flex items-center space-x-1 text-caption text-carbon-400">
                 <Clock className="h-3 w-3" />
@@ -145,7 +163,6 @@ export const CarbonMetricCard = ({
               </div>
             )}
 
-            {/* Efficiency indicator */}
             {value > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
@@ -165,7 +182,6 @@ export const CarbonMetricCard = ({
           </div>
         </CardContent>
 
-        {/* Carbon glow effect for high emissions */}
         {intensity === 'high' && (
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-danger/5 to-transparent pointer-events-none"
@@ -175,7 +191,6 @@ export const CarbonMetricCard = ({
           />
         )}
 
-        {/* Success glow effect for low emissions */}
         {intensity === 'low' && (
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-primary-500/5 to-transparent pointer-events-none"

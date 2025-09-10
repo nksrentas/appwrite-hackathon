@@ -3,7 +3,7 @@
  * Provides comprehensive performance tracking, rate limiting, and optimization tools
  */
 
-import { logger } from '~/utils/logging-utils';
+import { logger } from './logging-utils';
 
 // Types
 export interface PerformanceMetrics {
@@ -35,6 +35,17 @@ export class PerformanceMonitor {
   private metrics: Map<string, PerformanceMetrics[]> = new Map();
   private maxMetricsPerKey: number = 100;
   private cleanupInterval: NodeJS.Timeout;
+  
+  // WebSocket metrics
+  private webSocketMetrics = {
+    connections: 0,
+    disconnections: 0,
+    totalConnections: 0,
+    subscriptions: new Map<string, number>(),
+    broadcasts: new Map<string, number>(),
+    averageSessionDuration: 0,
+    apiCalls: new Map<string, { count: number; totalDuration: number }>()
+  };
 
   constructor(maxMetricsPerKey: number = 100) {
     this.maxMetricsPerKey = maxMetricsPerKey;
@@ -182,9 +193,85 @@ export class PerformanceMonitor {
     }
   }
 
-  /**
-   * Destroy performance monitor
-   */
+  
+  recordWebSocketConnection(): void {
+    this.webSocketMetrics.connections++;
+    this.webSocketMetrics.totalConnections++;
+  }
+  
+  recordWebSocketDisconnection(sessionDuration: number): void {
+    this.webSocketMetrics.connections--;
+    this.webSocketMetrics.disconnections++;
+    
+    const totalSessions = this.webSocketMetrics.disconnections;
+    this.webSocketMetrics.averageSessionDuration = 
+      (this.webSocketMetrics.averageSessionDuration * (totalSessions - 1) + sessionDuration) / totalSessions;
+  }
+  
+  recordSubscription(channel: string): void {
+    const current = this.webSocketMetrics.subscriptions.get(channel) || 0;
+    this.webSocketMetrics.subscriptions.set(channel, current + 1);
+  }
+  
+  recordBroadcast(channel: string, subscriberCount: number): void {
+    const current = this.webSocketMetrics.broadcasts.get(channel) || 0;
+    this.webSocketMetrics.broadcasts.set(channel, current + subscriberCount);
+  }
+  
+  recordApiCall(path: string, duration: number): void {
+    const current = this.webSocketMetrics.apiCalls.get(path) || { count: 0, totalDuration: 0 };
+    current.count++;
+    current.totalDuration += duration;
+    this.webSocketMetrics.apiCalls.set(path, current);
+  }
+  
+  getWebSocketMetrics() {
+    const subscriptionStats = Array.from(this.webSocketMetrics.subscriptions.entries())
+      .map(([channel, count]) => ({ channel, count }))
+      .sort((a, b) => b.count - a.count);
+    
+    const broadcastStats = Array.from(this.webSocketMetrics.broadcasts.entries())
+      .map(([channel, count]) => ({ channel, count }))
+      .sort((a, b) => b.count - a.count);
+    
+    const apiStats = Array.from(this.webSocketMetrics.apiCalls.entries())
+      .map(([path, stats]) => ({
+        path,
+        count: stats.count,
+        totalDuration: stats.totalDuration,
+        averageDuration: stats.totalDuration / stats.count
+      }))
+      .sort((a, b) => b.count - a.count);
+    
+    return {
+      connections: {
+        current: this.webSocketMetrics.connections,
+        total: this.webSocketMetrics.totalConnections,
+        disconnections: this.webSocketMetrics.disconnections,
+        averageSessionDuration: Math.round(this.webSocketMetrics.averageSessionDuration)
+      },
+      subscriptions: {
+        totalChannels: this.webSocketMetrics.subscriptions.size,
+        topChannels: subscriptionStats.slice(0, 10)
+      },
+      broadcasts: {
+        totalChannels: this.webSocketMetrics.broadcasts.size,
+        topChannels: broadcastStats.slice(0, 10)
+      },
+      api: {
+        totalEndpoints: this.webSocketMetrics.apiCalls.size,
+        topEndpoints: apiStats.slice(0, 10)
+      }
+    };
+  }
+  
+  getMetrics() {
+    return {
+      performance: this.getOverview(),
+      websocket: this.getWebSocketMetrics()
+    };
+  }
+
   destroy(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
@@ -193,9 +280,6 @@ export class PerformanceMonitor {
   }
 }
 
-/**
- * Rate limiting implementation
- */
 export class RateLimiter {
   private requests: Map<string, number[]> = new Map();
   private config: Required<RateLimitConfig>;
@@ -209,11 +293,7 @@ export class RateLimiter {
     };
   }
 
-  /**
-   * Check if request is allowed
-   */
   isAllowed(identifier: string, wasSuccessful?: boolean): boolean {
-    // Skip rate limiting based on configuration
     if (wasSuccessful && this.config.skipSuccessfulRequests) {
       return true;
     }
@@ -225,13 +305,10 @@ export class RateLimiter {
     const now = Date.now();
     const windowStart = now - this.config.windowMs;
 
-    // Get or create request timestamps for this key
     let timestamps = this.requests.get(key) || [];
     
-    // Remove old requests outside the window
     timestamps = timestamps.filter(time => time > windowStart);
     
-    // Check if limit exceeded
     if (timestamps.length >= this.config.maxRequests) {
       logger.warn(`Rate limit exceeded for key: ${key}`, {
         metadata: {
@@ -243,16 +320,12 @@ export class RateLimiter {
       return false;
     }
 
-    // Add current request timestamp
     timestamps.push(now);
     this.requests.set(key, timestamps);
 
     return true;
   }
 
-  /**
-   * Get remaining requests for identifier
-   */
   getRemaining(identifier: string): number {
     const key = this.config.keyGenerator(identifier);
     const now = Date.now();
@@ -263,9 +336,6 @@ export class RateLimiter {
     return Math.max(0, this.config.maxRequests - validTimestamps.length);
   }
 
-  /**
-   * Get reset time for identifier
-   */
   getResetTime(identifier: string): number {
     const key = this.config.keyGenerator(identifier);
     const timestamps = this.requests.get(key) || [];
@@ -277,25 +347,16 @@ export class RateLimiter {
     return timestamps[0] + this.config.windowMs;
   }
 
-  /**
-   * Clear requests for identifier
-   */
   clear(identifier: string): void {
     const key = this.config.keyGenerator(identifier);
     this.requests.delete(key);
   }
 
-  /**
-   * Clear all requests
-   */
   clearAll(): void {
     this.requests.clear();
   }
 }
 
-/**
- * Request throttling implementation
- */
 export class RequestThrottler {
   private queues: Map<string, Array<() => void>> = new Map();
   private executing: Map<string, number> = new Map();
@@ -308,9 +369,6 @@ export class RequestThrottler {
     };
   }
 
-  /**
-   * Throttle execution of a function
-   */
   async throttle<T>(
     key: string,
     fn: () => Promise<T>
@@ -318,38 +376,31 @@ export class RequestThrottler {
     return new Promise((resolve, reject) => {
       const execute = async () => {
         try {
-          // Track executing requests
           const current = this.executing.get(key) || 0;
           this.executing.set(key, current + 1);
 
           const result = await fn();
           
-          // Release execution slot
           const updated = this.executing.get(key)! - 1;
           this.executing.set(key, updated);
 
-          // Process next in queue
           setTimeout(() => this.processQueue(key), this.config.window);
 
           resolve(result);
         } catch (error) {
-          // Release execution slot on error
           const current = this.executing.get(key)! - 1;
           this.executing.set(key, current);
 
-          // Process next in queue
           setTimeout(() => this.processQueue(key), this.config.window);
 
           reject(error);
         }
       };
 
-      // Check if we can execute immediately
       const current = this.executing.get(key) || 0;
       if (current < this.config.limit) {
         execute();
       } else {
-        // Add to queue
         if (!this.queues.has(key)) {
           this.queues.set(key, []);
         }
@@ -358,9 +409,6 @@ export class RequestThrottler {
     });
   }
 
-  /**
-   * Process queued requests
-   */
   private processQueue(key: string): void {
     const queue = this.queues.get(key);
     if (!queue || queue.length === 0) return;
@@ -374,32 +422,20 @@ export class RequestThrottler {
     }
   }
 
-  /**
-   * Get queue length for key
-   */
   getQueueLength(key: string): number {
     return this.queues.get(key)?.length || 0;
   }
 
-  /**
-   * Get executing count for key
-   */
   getExecutingCount(key: string): number {
     return this.executing.get(key) || 0;
   }
 
-  /**
-   * Clear queue for key
-   */
   clearQueue(key: string): void {
     this.queues.delete(key);
     this.executing.delete(key);
   }
 }
 
-/**
- * Circuit breaker implementation
- */
 export class CircuitBreaker {
   private failures: Map<string, { count: number; lastFailure: number; state: 'closed' | 'open' | 'half-open' }> = new Map();
   private failureThreshold: number;
@@ -416,9 +452,6 @@ export class CircuitBreaker {
     this.monitorWindow = monitorWindow;
   }
 
-  /**
-   * Execute function with circuit breaker protection
-   */
   async execute<T>(
     key: string,
     fn: () => Promise<T>,
@@ -426,7 +459,6 @@ export class CircuitBreaker {
   ): Promise<T> {
     const state = this.getState(key);
 
-    // Circuit is open - reject immediately
     if (state === 'open') {
       if (fallback) {
         logger.info(`Circuit breaker open for ${key}, using fallback`);
@@ -438,11 +470,9 @@ export class CircuitBreaker {
     try {
       const result = await fn();
       
-      // Success - reset failure count
       this.recordSuccess(key);
       return result;
     } catch (error) {
-      // Failure - increment count and potentially open circuit
       this.recordFailure(key);
       
       const newState = this.getState(key);
@@ -455,23 +485,18 @@ export class CircuitBreaker {
     }
   }
 
-  /**
-   * Get current state of circuit breaker
-   */
   private getState(key: string): 'closed' | 'open' | 'half-open' {
     const state = this.failures.get(key);
     if (!state) return 'closed';
 
     const now = Date.now();
     
-    // Check if we should reset from open to half-open
     if (state.state === 'open' && now - state.lastFailure > this.resetTimeout) {
       state.state = 'half-open';
       this.failures.set(key, state);
       return 'half-open';
     }
 
-    // Check if failures are outside monitoring window
     if (now - state.lastFailure > this.monitorWindow) {
       state.count = 0;
       state.state = 'closed';
@@ -482,9 +507,6 @@ export class CircuitBreaker {
     return state.state;
   }
 
-  /**
-   * Record successful execution
-   */
   private recordSuccess(key: string): void {
     const state = this.failures.get(key);
     if (state) {
@@ -494,9 +516,6 @@ export class CircuitBreaker {
     }
   }
 
-  /**
-   * Record failed execution
-   */
   private recordFailure(key: string): void {
     const state = this.failures.get(key) || { count: 0, lastFailure: 0, state: 'closed' as const };
     
@@ -516,9 +535,6 @@ export class CircuitBreaker {
     this.failures.set(key, state);
   }
 
-  /**
-   * Get circuit breaker stats
-   */
   getStats(key: string): { count: number; state: string; lastFailure: number } | null {
     const state = this.failures.get(key);
     if (!state) return null;
@@ -530,36 +546,26 @@ export class CircuitBreaker {
     };
   }
 
-  /**
-   * Manually reset circuit breaker
-   */
   reset(key: string): void {
     this.failures.delete(key);
   }
 
-  /**
-   * Reset all circuit breakers
-   */
   resetAll(): void {
     this.failures.clear();
   }
 }
 
-// Global instances
 export const performanceMonitor = new PerformanceMonitor();
 export const defaultRateLimiter = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   maxRequests: 100
 });
 export const apiThrottler = new RequestThrottler({
   limit: 10,
-  window: 1000 // 1 second
+  window: 1000
 });
 export const circuitBreaker = new CircuitBreaker();
 
-/**
- * Performance optimization decorators
- */
 export function withRateLimit(
   rateLimiter: RateLimiter,
   keyExtractor: (...args: any[]) => string
@@ -634,7 +640,6 @@ export function withCircuitBreaker(
   };
 }
 
-// Cleanup on process exit
 process.on('SIGINT', () => {
   performanceMonitor.destroy();
   process.exit(0);

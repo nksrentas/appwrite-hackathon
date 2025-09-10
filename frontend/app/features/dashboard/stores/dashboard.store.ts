@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { dataService } from '../services/data.service';
 import { realtimeService } from '../services/realtime.service';
-import type { AppwriteActivity } from '~/shared/services/appwrite.client';
+import type { AppwriteActivity } from '@shared/services/appwrite.client';
 import type { CarbonUpdatePayload, ActivityUpdatePayload } from '../services/realtime.service';
 
 

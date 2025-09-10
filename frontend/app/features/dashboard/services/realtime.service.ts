@@ -1,4 +1,4 @@
-import { CHANNELS } from '~/shared/services/appwrite.client';
+import { CHANNELS, DATABASE_ID, COLLECTIONS, realtime } from '@shared/services/appwrite.client';
 
 
 export type SubscriptionCallback<T = unknown> = (payload: T) => void;
@@ -39,7 +39,11 @@ class RealtimeService {
   private subscriptions = new Map<string, () => void>();
   private connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error' = 'disconnected';
   private statusCallbacks = new Set<(status: typeof this.connectionStatus) => void>();
-  private mockMode = true; // Enable mock mode for development
+  private mockMode = !realtime;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
 
   subscribeToUserCarbon(
     userId: string,
@@ -59,7 +63,7 @@ class RealtimeService {
           repository: 'example/repo',
         };
         onUpdate(mockUpdate);
-      }, 10000); // Mock update every 10 seconds
+      }, 10000);
 
       const unsubscribe = () => clearInterval(mockInterval);
       this.subscriptions.set(channelName, unsubscribe);
@@ -67,11 +71,55 @@ class RealtimeService {
       return unsubscribe;
     }
 
-    const unsubscribe = () => {
-      this.subscriptions.delete(channelName);
-    };
+    try {
+      this.connectionStatus = 'connecting';
+      this.notifyStatusChange();
 
-    return unsubscribe;
+      const subscription = realtime!.subscribe(
+        [`databases.${DATABASE_ID}.collections.${COLLECTIONS.USERS}.documents.${userId}`],
+        (response: any) => {
+          if (response.events.includes('databases.*.collections.*.documents.*.update')) {
+            const userData = response.payload;
+            if (userData.carbonFootprint) {
+              const update: CarbonUpdatePayload = {
+                userId,
+                carbonValue: userData.carbonFootprint.total || 0,
+                carbonUnit: 'g',
+                timestamp: userData.$updatedAt || new Date().toISOString(),
+                activityType: 'update',
+                repository: userData.currentRepository || 'N/A',
+              };
+              onUpdate(update);
+            }
+          }
+        }
+      );
+
+      this.connectionStatus = 'connected';
+      this.reconnectAttempts = 0;
+      this.notifyStatusChange();
+      this.startHeartbeat();
+
+      const unsubscribe = () => {
+        try {
+          subscription();
+          this.subscriptions.delete(channelName);
+        } catch (error) {
+          console.error('Error unsubscribing from carbon updates:', error);
+          onError?.(error instanceof Error ? error : new Error('Unknown error'));
+        }
+      };
+
+      this.subscriptions.set(channelName, unsubscribe);
+      return unsubscribe;
+    } catch (error) {
+      console.error('Failed to subscribe to user carbon updates:', error);
+      this.connectionStatus = 'error';
+      this.notifyStatusChange();
+      onError?.(error instanceof Error ? error : new Error('Subscription failed'));
+      
+      return () => {};
+    }
   }
 
   subscribeToUserActivities(
@@ -94,18 +142,57 @@ class RealtimeService {
           details: { message: 'Mock activity for development' },
         };
         onUpdate(mockUpdate);
-      }, 15000); // Mock update every 15 seconds
+      }, 15000);
 
       const unsubscribe = () => clearInterval(mockInterval);
       this.subscriptions.set(channelName, unsubscribe);
       return unsubscribe;
     }
 
-    const unsubscribe = () => {
-      this.subscriptions.delete(channelName);
-    };
+    try {
+      const subscription = realtime!.subscribe(
+        [
+          `databases.${DATABASE_ID}.collections.${COLLECTIONS.ACTIVITIES}.documents`,
+        ],
+        (response: any) => {
+          if (response.events.some((event: string) => 
+            event.includes('databases.*.collections.*.documents.*.create') ||
+            event.includes('databases.*.collections.*.documents.*.update')
+          )) {
+            const activityData = response.payload;
+            if (activityData.userId === userId) {
+              const update: ActivityUpdatePayload = {
+                id: activityData.$id,
+                type: activityData.type,
+                repository: activityData.repository,
+                carbonValue: activityData.carbonValue,
+                carbonUnit: activityData.carbonUnit || 'g',
+                timestamp: activityData.$createdAt || activityData.$updatedAt || new Date().toISOString(),
+                details: activityData.details || {},
+              };
+              onUpdate(update);
+            }
+          }
+        }
+      );
 
-    return unsubscribe;
+      const unsubscribe = () => {
+        try {
+          subscription();
+          this.subscriptions.delete(channelName);
+        } catch (error) {
+          console.error('Error unsubscribing from activity updates:', error);
+          onError?.(error instanceof Error ? error : new Error('Unknown error'));
+        }
+      };
+
+      this.subscriptions.set(channelName, unsubscribe);
+      return unsubscribe;
+    } catch (error) {
+      console.error('Failed to subscribe to user activities:', error);
+      onError?.(error instanceof Error ? error : new Error('Subscription failed'));
+      return () => {};
+    }
   }
 
   subscribeToLeaderboard(
@@ -132,7 +219,7 @@ class RealtimeService {
           lastUpdated: new Date().toISOString(),
         };
         onUpdate(mockUpdate);
-      }, 30000); // Mock update every 30 seconds
+      }, 30000);
 
       const unsubscribe = () => clearInterval(mockInterval);
       this.subscriptions.set(channelName, unsubscribe);
@@ -216,16 +303,58 @@ class RealtimeService {
   }
 
   async reconnect(): Promise<void> {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnection attempts reached');
+      this.connectionStatus = 'error';
+      this.notifyStatusChange();
+      return;
+    }
+
     this.connectionStatus = 'connecting';
+    this.reconnectAttempts++;
+    this.notifyStatusChange();
 
     try {
       this.unsubscribeAll();
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      this.stopHeartbeat();
+      
+      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      
       this.connectionStatus = 'connected';
+      this.startHeartbeat();
+      this.notifyStatusChange();
     } catch (error) {
       console.error('Reconnection failed:', error);
       this.connectionStatus = 'error';
+      this.notifyStatusChange();
       throw error;
+    }
+  }
+
+  private notifyStatusChange(): void {
+    this.statusCallbacks.forEach((callback) => {
+      try {
+        callback(this.connectionStatus);
+      } catch (error) {
+        console.error('Error in status callback:', error);
+      }
+    });
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (!this.isConnected()) {
+        this.reconnect().catch(console.error);
+      }
+    }, 30000);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
   }
 }

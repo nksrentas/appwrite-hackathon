@@ -10,7 +10,7 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 
-import globalStyles from './styles/globals.css?url';
+import globalStyles from './shared/styles/globals.css?url';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: globalStyles },

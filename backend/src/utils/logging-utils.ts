@@ -1,8 +1,3 @@
-/**
- * Production-ready logging utility for EcoTrace backend
- * Provides structured logging with different levels and contexts
- */
-
 export enum LogLevel {
   ERROR = 0,
   WARN = 1,
@@ -23,7 +18,7 @@ export interface LogContext {
   };
   performance?: {
     duration_ms: number;
-    memory_mb: number;
+    memory_mb?: number;
   };
   error?: {
     code: string;
@@ -31,6 +26,60 @@ export interface LogContext {
     stack?: string;
   };
   metadata?: Record<string, any>;
+  method?: string;
+  path?: string;
+  statusCode?: number;
+  duration?: string;
+  ip?: string;
+  userAgent?: string;
+  port?: number;
+  environment?: string;
+  connectionId?: string;
+  cors_origin?: string;
+  channel?: string;
+  count?: number;
+  ping_timeout?: number;
+  ping_interval?: number;
+  ipAddress?: string;
+  channels?: number;
+  totalSubscriptions?: number;
+  totalConnections?: number;
+  reason?: string;
+  event?: string;
+  sessionDuration?: string;
+  subscriberCount?: number;
+  subscriptionsCount?: number;
+  dataSize?: number;
+  connections?: string[];
+  features?: string[];
+  period?: string;
+  limit?: number;
+  type?: string;
+  updateInterval?: number;
+  carbonKg?: number;
+  activityType?: string;
+  totalUpdates?: number;
+  granularity?: string;
+  offset?: number;
+  days?: number;
+  data?: any;
+  currentTotal?: number;
+  totalActivities?: number;
+  returned?: number;
+  confidence?: string;
+  repository?: string;
+  topUsersCount?: number;
+  groups?: any;
+  since?: string;
+  previousTotal?: number;
+  totalCarbonKg?: number;
+  dataPoints?: number;
+  totalParticipants?: number;
+  processingTime?: string;
+  changePercentage?: number;
+  hasMore?: boolean;
+  trend?: string;
+  userRank?: number;
 }
 
 class Logger {
@@ -66,12 +115,10 @@ class Logger {
       ...context
     };
 
-    // In production, use JSON format for log aggregation
     if (this.isProduction) {
       return JSON.stringify(baseLog);
     }
 
-    // In development, use human-readable format
     let formatted = `[${timestamp}] ${level}: ${message}`;
     if (context) {
       formatted += ` | ${JSON.stringify(context, null, 2)}`;
@@ -107,7 +154,6 @@ class Logger {
     console.log(logMessage);
   }
 
-  // Specialized logging methods for EcoTrace operations
   carbonCalculation(
     message: string, 
     calculation: { type: string; confidence: string; carbon_kg: number },
@@ -211,12 +257,8 @@ class Logger {
   }
 }
 
-// Global logger instance
 export const logger = new Logger();
 
-/**
- * Performance monitoring decorator for functions
- */
 export function withPerformanceLogging<T extends (...args: any[]) => any>(
   fn: T,
   functionName?: string
@@ -228,7 +270,6 @@ export function withPerformanceLogging<T extends (...args: any[]) => any>(
     try {
       const result = fn(...args);
       
-      // Handle async functions
       if (result instanceof Promise) {
         return result
           .then((value) => {
@@ -256,7 +297,6 @@ export function withPerformanceLogging<T extends (...args: any[]) => any>(
           });
       }
       
-      // Handle sync functions
       const duration = Date.now() - startTime;
       const memoryUsed = (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024;
       
@@ -281,9 +321,6 @@ export function withPerformanceLogging<T extends (...args: any[]) => any>(
   }) as T;
 }
 
-/**
- * Request tracing utility for debugging complex flows
- */
 export class RequestTracer {
   private requestId: string;
   private startTime: number;

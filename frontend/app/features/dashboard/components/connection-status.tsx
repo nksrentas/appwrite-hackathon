@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Wifi, WifiOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { cn } from '~/shared/utils/cn';
+import { cn } from '@shared/utils/cn';
 
 interface ConnectionStatusProps {
   isConnected: boolean;
@@ -69,7 +69,6 @@ export const ConnectionStatus = ({
       transition={{ duration: 0.3 }}
       layout
     >
-      {/* Status icon with pulse animation */}
       <motion.div
         animate={
           isConnected && !isLoading
@@ -86,12 +85,10 @@ export const ConnectionStatus = ({
         {getStatusIcon()}
       </motion.div>
 
-      {/* Status text and details */}
       <div className="flex flex-col space-y-1">
         <div className="flex items-center space-x-2">
           <span className="font-medium">{getStatusText()}</span>
 
-          {/* Subscription count */}
           {isConnected && subscriptionCount > 0 && (
             <motion.span
               className="text-caption opacity-75"
@@ -104,7 +101,6 @@ export const ConnectionStatus = ({
           )}
         </div>
 
-        {/* Additional status information */}
         <div className="text-caption opacity-75">
           {errorMessage ? (
             <span>{errorMessage}</span>
@@ -118,7 +114,6 @@ export const ConnectionStatus = ({
         </div>
       </div>
 
-      {/* Reconnect button */}
       {(!isConnected || errorMessage) && onReconnect && (
         <motion.button
           className="ml-2 px-3 py-1 text-caption font-medium rounded-md bg-white/20 hover:bg-white/30 transition-colors"
@@ -131,7 +126,6 @@ export const ConnectionStatus = ({
         </motion.button>
       )}
 
-      {/* Connection quality indicator */}
       {isConnected && (
         <motion.div
           className="flex space-x-1"

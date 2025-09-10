@@ -17,7 +17,8 @@ if (typeof window !== 'undefined') {
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const functions = new Functions(client);
-export const realtime: any = null;
+
+export const realtime = typeof window !== 'undefined' ? client : null;
 
 export { client };
 

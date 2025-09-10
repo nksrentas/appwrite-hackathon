@@ -1,15 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { GitCommit, GitPullRequest, Zap, Package, Clock, MapPin, ExternalLink } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
-import { Badge } from '~/shared/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
+import { Badge } from '@shared/components/ui/badge';
 import {
   formatCarbon,
   getCarbonIntensity,
   getCarbonIntensityClasses,
   getRelativeTime,
-} from '~/shared/utils/carbon';
-import type { AppwriteActivity } from '~/shared/services/appwrite.client';
-import { cn } from '~/shared/utils/cn';
+} from '@shared/utils/carbon';
+import type { AppwriteActivity } from '@shared/services/appwrite.client';
+import { cn } from '@shared/utils/cn';
 
 interface ActivityFeedProps {
   activities: AppwriteActivity[];
@@ -162,12 +162,10 @@ export const ActivityFeed = ({
                   }}
                   className="activity-item group"
                 >
-                  {/* Activity icon */}
                   <div className={cn('p-2 rounded-lg flex-shrink-0', colorClasses)}>
                     <Icon className="h-4 w-4" />
                   </div>
 
-                  {/* Activity content */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between">
                       <h4 className="text-body-sm font-medium text-carbon-900 truncate">{title}</h4>
@@ -189,7 +187,6 @@ export const ActivityFeed = ({
                         <span>{getRelativeTime(activity.$createdAt)}</span>
                       </div>
 
-                      {/* GitHub link */}
                       <motion.button
                         className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 hover:text-carbon-700"
                         whileHover={{ scale: 1.05 }}
@@ -200,7 +197,6 @@ export const ActivityFeed = ({
                       </motion.button>
                     </div>
 
-                    {/* Additional details for certain activity types */}
                     {activity.type === 'ci_run' && (
                       <div className="flex items-center space-x-2 text-caption">
                         <div
@@ -227,7 +223,6 @@ export const ActivityFeed = ({
           )}
         </AnimatePresence>
 
-        {/* Show more button */}
         {activities.length > maxItems && (
           <motion.div
             className="pt-4 text-center"

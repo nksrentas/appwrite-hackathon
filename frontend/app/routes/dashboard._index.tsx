@@ -16,14 +16,19 @@ import {
   Target,
 } from 'lucide-react';
 
-import { useAuthStore } from '~/features/auth/stores/auth.store';
-import { useDashboardStore } from '~/features/dashboard/stores/dashboard.store';
-import { CarbonMetricCard } from '~/features/dashboard/components/carbon-metric-card';
-import { ActivityFeed } from '~/features/dashboard/components/activity-feed';
-import { ConnectionStatus } from '~/features/dashboard/components/connection-status';
-import { Card, CardContent, CardHeader, CardTitle } from '~/shared/components/ui/card';
-import { Button } from '~/shared/components/ui/button';
-import { Badge } from '~/shared/components/ui/badge';
+import { useAuthStore } from '@features/auth/stores/auth.store';
+import { useDashboardStore } from '@features/dashboard/stores/dashboard.store';
+import { CarbonMetricCard } from '@features/dashboard/components/carbon-metric-card';
+import { ActivityFeed } from '@features/dashboard/components/activity-feed';
+import { ConnectionStatus } from '@features/dashboard/components/connection-status';
+import { MethodologyModal } from '@features/dashboard/components/methodology-modal';
+import { TrendChart } from '@features/dashboard/components/trend-chart';
+import { ActionItems } from '@features/dashboard/components/action-items';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
+import { Button } from '@shared/components/ui/button';
+import { Badge } from '@shared/components/ui/badge';
+import { NotificationProvider, useNotifications, notificationUtils } from '@shared/components/notification-system';
+import { performanceMonitor, useDebounce } from '@shared/utils/performance';
 
 export const meta: MetaFunction = () => {
   return [
@@ -39,7 +44,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const { mockMode } = useLoaderData<typeof loader>();
   const { user, isAuthenticated, checkAuth } = useAuthStore();
   const {
@@ -56,7 +61,11 @@ export default function Dashboard() {
     clearError,
   } = useDashboardStore();
 
+  const { addNotification } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
+  const [trendPeriod, setTrendPeriod] = useState<'7d' | '30d' | '90d'>('7d');
+  
+  const debouncedTrendPeriod = useDebounce(trendPeriod, 300);
 
   useEffect(() => {
     checkAuth();
@@ -64,12 +73,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && isAuthenticated) {
+      performanceMonitor.startMark('dashboard-load');
       loadDashboard(user.$id);
       subscribeToRealTimeUpdates(user.$id);
     }
 
     return () => {
       unsubscribeFromRealTimeUpdates();
+      performanceMonitor.endMark('dashboard-load');
     };
   }, [
     user,
@@ -79,16 +90,55 @@ export default function Dashboard() {
     unsubscribeFromRealTimeUpdates,
   ]);
 
+  useEffect(() => {
+    if (error) {
+      addNotification(notificationUtils.error(
+        'Connection Error',
+        error,
+        {
+          action: {
+            label: 'Retry',
+            onClick: handleReconnect
+          }
+        }
+      ));
+    }
+  }, [error, addNotification]);
+
+  useEffect(() => {
+    if (isConnected && !error) {
+      const prevConnectionState = sessionStorage.getItem('dashboardConnected');
+      if (prevConnectionState === 'false') {
+        addNotification(notificationUtils.success(
+          'Connected',
+          'Real-time updates restored'
+        ));
+      }
+    }
+    sessionStorage.setItem('dashboardConnected', isConnected.toString());
+  }, [isConnected, error, addNotification]);
+
   const handleRefresh = async () => {
     if (!user) return;
 
     setRefreshing(true);
+    performanceMonitor.startMark('dashboard-refresh');
+    
     try {
       await refreshData(user.$id);
+      addNotification(notificationUtils.success(
+        'Dashboard Updated',
+        'Latest data has been loaded'
+      ));
     } catch (error) {
       console.error('Refresh failed:', error);
+      addNotification(notificationUtils.error(
+        'Refresh Failed',
+        'Could not load latest data. Please try again.'
+      ));
     } finally {
       setRefreshing(false);
+      performanceMonitor.endMark('dashboard-refresh');
     }
   };
 
@@ -96,7 +146,25 @@ export default function Dashboard() {
     if (user) {
       clearError();
       subscribeToRealTimeUpdates(user.$id);
+      addNotification(notificationUtils.info(
+        'Reconnecting...',
+        'Attempting to restore real-time updates'
+      ));
     }
+  };
+
+  const handleActionStart = (actionId: string) => {
+    addNotification(notificationUtils.info(
+      'Action Started',
+      'Carbon reduction action has been initiated'
+    ));
+  };
+
+  const handleActionComplete = (actionId: string) => {
+    addNotification(notificationUtils.success(
+      'Action Completed',
+      'Great work on reducing your carbon footprint!'
+    ));
   };
 
   if (!isAuthenticated && !isLoading) {
@@ -135,11 +203,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-carbon-50 via-primary-50/20 to-background">
-      {/* Dashboard Header */}
       <header className="border-b border-carbon-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo and navigation */}
             <div className="flex items-center space-x-8">
               <Link to="/" className="flex items-center space-x-3">
                 <div className="bg-primary-500 p-2 rounded-lg carbon-glow">
@@ -170,7 +236,6 @@ export default function Dashboard() {
               </nav>
             </div>
 
-            {/* User actions */}
             <div className="flex items-center space-x-4">
               <ConnectionStatus
                 isConnected={isConnected}
@@ -222,14 +287,12 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Dashboard Content */}
       <motion.main
         className="max-w-7xl mx-auto px-4 lg:px-6 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Welcome Section */}
         <motion.div className="mb-8" variants={itemVariants}>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -247,7 +310,6 @@ export default function Dashboard() {
               </p>
             </div>
 
-            {/* Quick actions */}
             <div className="flex items-center space-x-3">
               <Button variant="outline" className="hidden sm:flex">
                 <Github className="h-4 w-4 mr-2" />
@@ -260,7 +322,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* New activity notification */}
           {lastActivity && (
             <motion.div
               className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6"
@@ -288,7 +349,6 @@ export default function Dashboard() {
           )}
         </motion.div>
 
-        {/* Carbon Metrics Grid */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"
           variants={containerVariants}
@@ -345,9 +405,18 @@ export default function Dashboard() {
           </motion.div>
         </motion.div>
 
-        {/* Dashboard Content Grid */}
+        <motion.div className="mb-8" variants={itemVariants}>
+          <TrendChart
+            period={debouncedTrendPeriod}
+            onPeriodChange={setTrendPeriod}
+            isLoading={isLoading}
+            showTarget={true}
+            showEfficiency={false}
+            height={350}
+          />
+        </motion.div>
+
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Activity Feed */}
           <motion.div className="lg:col-span-2" variants={itemVariants}>
             <ActivityFeed
               activities={recentActivities}
@@ -357,14 +426,23 @@ export default function Dashboard() {
             />
           </motion.div>
 
-          {/* Sidebar with additional info */}
           <motion.div className="space-y-6" variants={itemVariants}>
-            {/* Leaderboard Preview */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <span>Your Rank</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-5 w-5" />
+                    <span>Your Rank</span>
+                  </div>
+                  <MethodologyModal
+                    carbonValue={metrics?.todayCarbon || 0}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="text-carbon-500 hover:text-carbon-700">
+                        <span className="sr-only">How is this calculated?</span>
+                        ?
+                      </Button>
+                    }
+                  />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -385,7 +463,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
             <Card>
               <CardHeader>
                 <CardTitle>This Week's Impact</CardTitle>
@@ -411,7 +488,22 @@ export default function Dashboard() {
             </Card>
           </motion.div>
         </div>
+
+        <motion.div className="mt-12" variants={itemVariants}>
+          <ActionItems
+            onActionStart={handleActionStart}
+            onActionComplete={handleActionComplete}
+          />
+        </motion.div>
       </motion.main>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <NotificationProvider position="top-right" maxNotifications={3}>
+      <DashboardContent />
+    </NotificationProvider>
   );
 }

@@ -1,5 +1,4 @@
-import { Client } from 'node-appwrite';
-import { logger } from '~/utils/logging-utils';
+import { logger } from '../utils/logging-utils';
 
 export interface RealtimeEvent {
   event: string;
@@ -43,21 +42,16 @@ export const REALTIME_CHANNELS = {
 };
 
 export class EcoTraceRealtimeService {
-  // @ts-expect-error - client will be used when real-time functionality is implemented
-  private _client: Client;
   private isConnected: boolean = false;
 
   constructor() {
-    this._client = new Client()
-      .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1')
-      .setProject(process.env.APPWRITE_PROJECT_ID || '');
+    // Client initialization will be implemented in future iterations
   }
 
   async connect(): Promise<void> {
     try {
       this.isConnected = true;
-      logger.info('EcoTrace Realtime service initialized (server-side mode)');
-      logger.warn('Note: Real-time subscriptions are not available in server-side SDK. This service provides channel helpers and event structures for client-side integration.');
+      logger.info('EcoTrace Realtime service initialized');
     } catch (error: any) {
       logger.error('Failed to initialize realtime service', {
         error: {
@@ -128,12 +122,7 @@ export class EcoTraceRealtimeService {
 }
 
 export class RealtimeEventBroadcaster {
-  // @ts-expect-error - service will be used when broadcasting is implemented
-  private _service: EcoTraceRealtimeService;
-
-  constructor(realtimeService: EcoTraceRealtimeService) {
-    this._service = realtimeService;
-  }
+  // Service will be implemented in future iterations
 
   async broadcastCarbonUpdate(params: {
     userId: string;
@@ -141,15 +130,39 @@ export class RealtimeEventBroadcaster {
     carbonKg: number;
     confidence: string;
   }): Promise<void> {
-    const { userId, activityId, carbonKg } = params;
-    
-
+    const { userId, activityId, carbonKg, confidence } = params;
     const channel = REALTIME_CHANNELS.USER_CARBON(userId);
     
-    logger.info('Carbon update event created for broadcasting', {
+    // Import WebSocket service dynamically to avoid circular dependencies
+    const { webSocketService } = await import('./websocket-service');
+    const { liveDataService } = await import('./live-data-service');
+    
+    // Broadcast via WebSocket
+    webSocketService.broadcast({
+      channel,
+      event: 'carbon.calculated',
+      data: {
+        user_id: userId,
+        activity_id: activityId,
+        carbon_kg: carbonKg,
+        confidence,
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    await liveDataService.processCarbonUpdate({
       userId,
       activityId,
-      metadata: { channel, carbonKg }
+      carbonKg,
+      activityType: 'unknown', // Will be determined by live service
+      confidence
+    });
+    
+    logger.info('Carbon update broadcasted', {
+      userId,
+      activityId,
+      metadata: { channel, carbonKg, confidence }
     });
   }
 
@@ -159,15 +172,38 @@ export class RealtimeEventBroadcaster {
     activityType: string;
     repository: string;
   }): Promise<void> {
-    const { userId, activityId, activityType } = params;
-    
-
+    const { userId, activityId, activityType, repository } = params;
     const channel = REALTIME_CHANNELS.USER_ACTIVITIES(userId);
     
-    logger.info('Activity update event created for broadcasting', {
+    // Import WebSocket service dynamically to avoid circular dependencies
+    const { webSocketService } = await import('./websocket-service');
+    const { liveDataService } = await import('./live-data-service');
+    
+    // Broadcast via WebSocket
+    webSocketService.broadcast({
+      channel,
+      event: 'activity.created',
+      data: {
+        user_id: userId,
+        activity_id: activityId,
+        activity_type: activityType,
+        repository,
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    await liveDataService.processActivityUpdate({
       userId,
       activityId,
-      metadata: { channel, activityType }
+      activityType,
+      repository
+    });
+    
+    logger.info('Activity update broadcasted', {
+      userId,
+      activityId,
+      metadata: { channel, activityType, repository }
     });
   }
 
@@ -176,18 +212,31 @@ export class RealtimeEventBroadcaster {
     updatedUsers: string[];
   }): Promise<void> {
     const { periodType, updatedUsers } = params;
-    
-
     const channel = REALTIME_CHANNELS.LEADERBOARD(periodType);
     
-    logger.info('Leaderboard update event created for broadcasting', {
+    // Import WebSocket service dynamically to avoid circular dependencies
+    const { webSocketService } = await import('./websocket-service');
+    
+    // Broadcast via WebSocket
+    webSocketService.broadcast({
+      channel,
+      event: 'leaderboard.updated',
+      data: {
+        period_type: periodType,
+        updated_users: updatedUsers,
+        timestamp: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.info('Leaderboard update broadcasted', {
       metadata: { periodType, channel, updatedUsersCount: updatedUsers.length }
     });
   }
 }
 
 export const realtimeService = new EcoTraceRealtimeService();
-export const realtimeBroadcaster = new RealtimeEventBroadcaster(realtimeService);
+export const realtimeBroadcaster = new RealtimeEventBroadcaster();
 
 logger.info('EcoTrace Realtime services initialized (server-side)', {
   metadata: {

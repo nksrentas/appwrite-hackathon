@@ -477,19 +477,24 @@ async function triggerRealtimeUpdates(
   functions: Functions,
   userId: string,
   activityId: string,
-  carbonKg: number
+  carbonKg: number,
+  confidence: string
 ): Promise<void> {
   try {
-    // This would trigger a realtime broadcast function
-    // For now, we'll just log the intent
-    console.log(`Would trigger realtime update for user ${userId}: activity ${activityId}, carbon ${carbonKg}kg`);
+    // Create a real-time broadcast using the realtime-broadcaster function
+    await functions.createExecution(
+      'realtime-broadcaster',
+      JSON.stringify({
+        type: 'carbon_update',
+        userId,
+        activityId,
+        carbonKg,
+        confidence,
+        timestamp: new Date().toISOString()
+      })
+    );
     
-    // In a full implementation, this would call a realtime broadcast function
-    // await functions.createExecution('realtime-broadcaster', JSON.stringify({
-    //   channel: `user.${userId}`,
-    //   event: 'carbon.calculated',
-    //   data: { activity_id: activityId, carbon_kg: carbonKg }
-    // }));
+    console.log(`Real-time update triggered for user ${userId}: activity ${activityId}, carbon ${carbonKg}kg, confidence ${confidence}`);
     
   } catch (error) {
     console.error('Failed to trigger realtime updates:', error);
@@ -525,7 +530,7 @@ export default async function handler(context: AppwriteContext) {
     await storeCalculationResults(databases, input, result);
     
     // Trigger real-time updates
-    await triggerRealtimeUpdates(functions, input.user_id, input.activity_id, result.carbon_kg);
+    await triggerRealtimeUpdates(functions, input.user_id, input.activity_id, result.carbon_kg, result.confidence);
     
     return res.json({
       success: true,

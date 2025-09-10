@@ -3,7 +3,7 @@ import { json, redirect } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useEffect } from 'react';
 import { Leaf, User, Settings, LogOut } from 'lucide-react';
-import { useAuthStore } from '~/features/auth/stores/auth.store';
+import { useAuthStore } from '@features/auth/stores/auth.store';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return json({});

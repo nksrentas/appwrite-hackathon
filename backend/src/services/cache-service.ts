@@ -1,4 +1,4 @@
-import { logger } from '~/utils/logging-utils';
+import { logger } from '../utils/logging-utils';
 
 export interface CacheOptions {
   ttl?: number;

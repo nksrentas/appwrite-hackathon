@@ -21,7 +21,10 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "@features/*": ["./src/features/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@websocket/*": ["./src/websocket/*"],
+      "@config/*": ["./src/shared/config/*"]
     }
   },
   "include": [

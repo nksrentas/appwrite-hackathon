@@ -6,8 +6,8 @@ import {
   QueryBuilder,
   PermissionHelper,
   cache
-} from '~/utils/appwrite-client';
-import { logger } from '~/utils/logging-utils';
+} from '../utils/appwrite-client';
+import { logger } from '../utils/logging-utils';
 import { 
   User, 
   Activity, 
@@ -19,7 +19,7 @@ import {
   CalculationDocument,
   LeaderboardDocument,
   EmissionFactorDocument
-} from '~/types/database-types';
+} from '../types/database-types';
 
 export interface CreateUserParams {
   userData: Omit<User, '$id' | '$createdAt' | '$updatedAt'>;

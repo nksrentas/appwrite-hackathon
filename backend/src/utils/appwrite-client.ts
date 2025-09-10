@@ -1,11 +1,5 @@
-/**
- * Appwrite Client Configuration and Utilities
- * Centralized Appwrite client setup with proper error handling
- */
-
 import { Client, Databases, Functions, Account, Permission, Role } from 'node-appwrite';
 
-// Environment variables validation
 const requiredEnvVars = [
   'APPWRITE_ENDPOINT',
   'APPWRITE_PROJECT_ID', 
@@ -19,18 +13,15 @@ requiredEnvVars.forEach(envVar => {
   }
 });
 
-// Initialize Appwrite client
 export const client = new Client()
   .setEndpoint(process.env.APPWRITE_ENDPOINT!)
   .setProject(process.env.APPWRITE_PROJECT_ID!)
   .setKey(process.env.APPWRITE_API_KEY!);
 
-// Service instances
 export const databases = new Databases(client);
 export const functions = new Functions(client);
 export const account = new Account(client);
 
-// Constants
 export const DATABASE_ID = process.env.APPWRITE_DATABASE_ID!;
 
 export const COLLECTION_IDS = {
@@ -48,9 +39,6 @@ export const FUNCTION_IDS = {
   API_INTEGRATIONS: 'api-integrations'
 } as const;
 
-/**
- * Permission helper functions for Appwrite document security
- */
 export class PermissionHelper {
   static userRead(userId: string) {
     return Permission.read(Role.user(userId));
@@ -76,7 +64,6 @@ export class PermissionHelper {
     return Permission.read(Role.guests());
   }
 
-  // Standard permission sets
   static userOwned(userId: string) {
     return [
       this.userRead(userId),
@@ -100,9 +87,6 @@ export class PermissionHelper {
   }
 }
 
-/**
- * Enhanced error handling for Appwrite operations
- */
 export class AppwriteError extends Error {
   constructor(
     message: string,
@@ -115,9 +99,6 @@ export class AppwriteError extends Error {
   }
 }
 
-/**
- * Appwrite operation wrapper with standardized error handling
- */
 export async function executeAppwriteOperation<T>(
   operation: () => Promise<T>,
   operationName: string
@@ -127,7 +108,6 @@ export async function executeAppwriteOperation<T>(
   } catch (error: any) {
     console.error(`Appwrite operation failed [${operationName}]:`, error);
     
-    // Handle Appwrite-specific errors
     if (error.code) {
       throw new AppwriteError(
         error.message || `${operationName} failed`,
@@ -137,7 +117,6 @@ export async function executeAppwriteOperation<T>(
       );
     }
     
-    // Handle network errors
     if (error.message?.includes('fetch')) {
       throw new AppwriteError(
         `Network error during ${operationName}`,
@@ -147,7 +126,6 @@ export async function executeAppwriteOperation<T>(
       );
     }
     
-    // Generic error fallback
     throw new AppwriteError(
       `Unknown error during ${operationName}`,
       'UNKNOWN_ERROR',
@@ -157,9 +135,6 @@ export async function executeAppwriteOperation<T>(
   }
 }
 
-/**
- * Query helper for building Appwrite database queries
- */
 export class QueryBuilder {
   private queries: string[] = [];
 
@@ -243,9 +218,6 @@ export class QueryBuilder {
   }
 }
 
-/**
- * Real-time subscription helper
- */
 export class RealtimeHelper {
   static channelForUser(userId: string) {
     return `user.${userId}`;
@@ -264,12 +236,9 @@ export class RealtimeHelper {
   }
 }
 
-/**
- * Batch operation helper for handling multiple database operations
- */
 export class BatchProcessor {
   private operations: (() => Promise<any>)[] = [];
-  private maxBatchSize: number = 25; // Appwrite's function execution limit consideration
+  private maxBatchSize: number = 25;
 
   add(operation: () => Promise<any>) {
     this.operations.push(operation);
@@ -285,7 +254,6 @@ export class BatchProcessor {
         batch.map(op => op())
       );
       
-      // Process batch results
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
           results.push(result.value);
@@ -305,12 +273,9 @@ export class BatchProcessor {
   }
 }
 
-/**
- * Cache helper for reducing API calls
- */
 export class CacheManager {
   private cache = new Map<string, { data: any; expires: number }>();
-  private defaultTTL = 5 * 60 * 1000; // 5 minutes
+  private defaultTTL = 5 * 60 * 1000;
 
   set(key: string, data: any, ttl?: number): void {
     const expires = Date.now() + (ttl || this.defaultTTL);
@@ -337,7 +302,6 @@ export class CacheManager {
     this.cache.clear();
   }
 
-  // Cleanup expired entries
   cleanup(): void {
     const now = Date.now();
     for (const [key, item] of this.cache.entries()) {
@@ -348,8 +312,6 @@ export class CacheManager {
   }
 }
 
-// Global cache instance
 export const cache = new CacheManager();
 
-// Cleanup cache every 10 minutes
 setInterval(() => cache.cleanup(), 10 * 60 * 1000);
