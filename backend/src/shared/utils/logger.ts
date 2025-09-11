@@ -187,6 +187,161 @@ class Logger {
     });
   }
 
+  github(
+    message: string,
+    context: {
+      userId?: string;
+      connectionId?: string;
+      repositoryId?: number;
+      repositoryName?: string;
+      githubUsername?: string;
+      webhookId?: number | string;
+      activityId?: string;
+      eventType?: string;
+      deliveryId?: string;
+      state?: string;
+      scopes?: string[];
+      events?: string[];
+      success?: boolean;
+      repositoriesCount?: number;
+      trackedRepositoriesCount?: number;
+      activeWebhooksCount?: number;
+      [key: string]: any;
+    } = {}
+  ): void {
+    this.info(`[GitHub] ${message}`, {
+      functionName: 'github_integration',
+      metadata: context
+    });
+  }
+
+  githubError(
+    message: string,
+    context: {
+      error: string;
+      userId?: string;
+      connectionId?: string;
+      repositoryId?: number | string;
+      repositoryName?: string;
+      webhookId?: number | string;
+      activityId?: string;
+      eventType?: string;
+      deliveryId?: string;
+      state?: string;
+      [key: string]: any;
+    }
+  ): void {
+    this.error(`[GitHub] ${message}`, {
+      functionName: 'github_integration',
+      error: {
+        code: 'GITHUB_ERROR',
+        message: context.error
+      },
+      metadata: context
+    });
+  }
+
+  githubOAuth(
+    message: string,
+    context: {
+      userId: string;
+      state?: string;
+      scopes?: string[];
+      githubUserId?: string;
+      githubUsername?: string;
+      repositoriesCount?: number;
+      success?: boolean;
+      [key: string]: any;
+    }
+  ): void {
+    this.info(`[GitHub OAuth] ${message}`, {
+      functionName: 'github_oauth',
+      metadata: context
+    });
+  }
+
+  githubSecurity(
+    message: string,
+    context: {
+      userId?: string;
+      connectionId?: string;
+      tokenValid?: boolean;
+      encryptionOperation?: string;
+      webhookValidation?: boolean;
+      cleanupOperation?: string;
+      cleanedCount?: number;
+      [key: string]: any;
+    }
+  ): void {
+    this.info(`[GitHub Security] ${message}`, {
+      functionName: 'github_security',
+      metadata: context
+    });
+  }
+
+  githubRepository(
+    message: string,
+    context: {
+      userId: string;
+      repositoryId?: number;
+      repositoryName?: string;
+      fullName?: string;
+      isPrivate?: boolean;
+      trackingEnabled?: boolean;
+      webhookInstalled?: boolean;
+      lastActivity?: string;
+      syncOperation?: boolean;
+      [key: string]: any;
+    }
+  ): void {
+    this.info(`[GitHub Repository] ${message}`, {
+      functionName: 'github_repository',
+      metadata: context
+    });
+  }
+
+  githubWebhookProcessor(
+    message: string,
+    context: {
+      repositoryId: number;
+      eventType: string;
+      deliveryId: string;
+      success: boolean;
+      processingStatus?: string;
+      activityId?: string;
+      carbonKg?: number;
+      skipped?: boolean;
+      skipReason?: string;
+      errorMessage?: string;
+      [key: string]: any;
+    }
+  ): void {
+    this.info(`[GitHub Webhook] ${message}`, {
+      functionName: 'github_webhook_processor',
+      metadata: context
+    });
+  }
+
+  githubCarbon(
+    message: string,
+    context: {
+      userId: string;
+      repositoryId: number;
+      activityType: string;
+      activityId?: string;
+      estimatedKg?: number;
+      confidence?: string;
+      factors?: string[];
+      timestamp?: string;
+      [key: string]: any;
+    }
+  ): void {
+    this.info(`[GitHub Carbon] ${message}`, {
+      functionName: 'github_carbon_integration',
+      metadata: context
+    });
+  }
+
   performance(
     message: string,
     metrics: { duration_ms: number; memory_mb?: number },
