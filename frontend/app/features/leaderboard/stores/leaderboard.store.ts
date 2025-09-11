@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { dataService } from '~/services/data.service';
-import { realtimeService } from '~/services/realtime.service';
-import type { AppwriteLeaderboard } from '~/services/appwrite.client';
-import type { LeaderboardUpdatePayload } from '~/services/realtime.service';
+import { dataService } from '@shared/services/data.service';
+import { realtimeService } from '@shared/services/realtime.service';
+import type { AppwriteLeaderboard } from '@shared/services/appwrite.client';
+import type { LeaderboardUpdatePayload } from '@shared/services/realtime.service';
 
 
 export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'all_time';

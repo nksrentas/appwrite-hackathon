@@ -476,7 +476,7 @@ export const MethodologyModal = ({
                       <div className="flex items-center justify-between">
                         <span className="text-body-sm text-carbon-600">Standards Compliance</span>
                         <div className="flex flex-wrap gap-1">
-                          {(methodology.standards || []).map((standard: string) => (
+                          {(calculationResult.methodology.standards || []).map((standard: string) => (
                             <Badge key={standard} variant="outline" className="text-xs">
                               {standard}
                             </Badge>

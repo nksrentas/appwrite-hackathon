@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertTriangle, Info, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useState, createContext, useContext, useCallback } from 'react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { cn } from '../utils/cn';
+import { Button } from '@shared/components/ui/button';
+import { Badge } from '@shared/components/ui/badge';
+import { cn } from '@shared/utils/cn';
 
 type NotificationType = 'success' | 'warning' | 'error' | 'info';
 type NotificationPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center';
