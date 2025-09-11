@@ -17,7 +17,7 @@ export interface GitHubAuthResult {
 class AuthService {
   private client: Client;
   private account: Account;
-  private mockMode = true; // Enable mock mode for debugging
+  private mockMode = true;
 
   constructor() {
     const endpoint = typeof window !== 'undefined' 
@@ -36,7 +36,6 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    // In mock mode, check localStorage for user data
     if (this.mockMode && typeof window !== 'undefined') {
       try {
         const storedAuth = localStorage.getItem('ecotrace-auth');
@@ -163,7 +162,6 @@ class AuthService {
     user: AuthUser | null;
     needsOnboarding: boolean;
   }> {
-    // In mock mode, check localStorage for auth state
     if (this.mockMode && typeof window !== 'undefined') {
       try {
         const storedAuth = localStorage.getItem('ecotrace-auth');

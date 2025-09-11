@@ -170,7 +170,6 @@ class DataService {
       const result = await response.json();
       const data = result.data;
       
-      // Map backend response to frontend interface
       return {
         documents: data.activities || [],
         total: data.total || 0,
@@ -203,11 +202,10 @@ class DataService {
       const result = await response.json();
       const data = result.data;
       
-      // Map backend response to frontend interface
       return {
         totalCarbon: data.current_total || 0,
         weeklyCarbon: data.period_total || 0,
-        monthlyCarbon: data.current_total || 0, // Using current_total as fallback
+        monthlyCarbon: data.current_total || 0,
         dailyAverage: (data.period_total || 0) / 7,
         trend: data.change_percentage > 0 ? 'increasing' : data.change_percentage < 0 ? 'decreasing' : 'stable',
         efficiencyScore: data.efficiency_score || 0,
