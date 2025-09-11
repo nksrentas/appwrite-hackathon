@@ -13,17 +13,19 @@ export { carbonService } from '@features/carbon-calculation/services/carbon-serv
 import { logger } from '@shared/utils/logger';
 
 logger.info('Scientific Carbon Calculation Engine initialized', {
-  components: [
-    'EPA eGRID Integration',
-    'AWS Carbon Footprint API',
-    'Electricity Maps Integration', 
-    'Green Software Foundation SCI Compliance',
-    'Multi-Source Data Validation',
-    'Real-Time Emission Updates',
-    'Cross-Validation with External Calculators',
-    'Geographic Postal Code Mapping',
-    'Comprehensive Audit System'
-  ],
-  completionStatus: '100%',
-  productionReady: true
+  metadata: {
+    components: [
+      'EPA eGRID Integration',
+      'AWS Carbon Footprint API',
+      'Electricity Maps Integration', 
+      'Green Software Foundation SCI Compliance',
+      'Multi-Source Data Validation',
+      'Real-Time Emission Updates',
+      'Cross-Validation with External Calculators',
+      'Geographic Postal Code Mapping',
+      'Comprehensive Audit System'
+    ],
+    completionStatus: '100%',
+    productionReady: true
+  }
 });

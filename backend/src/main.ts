@@ -393,12 +393,6 @@ app.post('/api/calculation/carbon', async (req, res) => {
   
   try {
     const activityData = req.body;
-    const userContext = {
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent'),
-      sessionId: req.headers['x-session-id'] as string,
-      userId: req.headers['x-user-id'] as string
-    };
 
     logger.info('Carbon calculation requested', {
       metadata: { endpoint: '/carbon', activityType: activityData.activityType }
@@ -450,7 +444,7 @@ app.get('/api/calculation/methodology', async (_req, res) => {
       metadata: { endpoint: '/methodology' }
     });
 
-    const result = carbonCalculationEngine.getMethodology();
+    const result = await carbonCalculationEngine.getPublicMethodology('commit');
     const responseTime = Date.now() - startTime;
 
     res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -487,7 +481,7 @@ app.get('/api/calculation/sources', async (_req, res) => {
       metadata: { endpoint: '/sources' }
     });
 
-    const result = carbonCalculationEngine.getDataSources();
+    const result = await carbonCalculationEngine.getDataSources();
     const responseTime = Date.now() - startTime;
 
     res.setHeader('Cache-Control', 'public, max-age=1800');
@@ -524,7 +518,7 @@ app.get('/api/calculation/confidence', async (_req, res) => {
       metadata: { endpoint: '/confidence' }
     });
 
-    const result = carbonCalculationEngine.getConfidenceIndicators();
+    const result = await carbonCalculationEngine.getConfidenceIndicators();
     const responseTime = Date.now() - startTime;
 
     res.setHeader('Cache-Control', 'private, max-age=300');
@@ -596,8 +590,7 @@ app.get('/api/calculation/audit/:auditId', async (req, res) => {
         message: error.message,
         code: 'AUDIT_TRAIL_API_ERROR',
         stack: error.stack
-      },
-      auditId: req.params.auditId
+      }
     });
 
     res.status(500).json({
@@ -654,7 +647,7 @@ app.get('/api/calculation/health', async (_req, res) => {
                       health.overall === 'degraded' ? 200 : 503;
 
     res.status(statusCode).json({
-      success: health.overall !== 'unhealthy',
+      success: health.overall === 'healthy' || health.overall === 'degraded',
       data: {
         health,
         service: serviceInfo

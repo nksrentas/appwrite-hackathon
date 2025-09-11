@@ -11,6 +11,7 @@ import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 
 import globalStyles from './shared/styles/globals.css?url';
+import { NotificationProvider } from './shared/components/notification-system';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: globalStyles },
@@ -50,7 +51,9 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full bg-background text-foreground antialiased">
-        <Outlet />
+        <NotificationProvider>
+          <Outlet />
+        </NotificationProvider>
         <ScrollRestoration />
         <script
           dangerouslySetInnerHTML={{
@@ -73,21 +76,23 @@ export const ErrorBoundary = () => {
         <Links />
       </head>
       <body className="h-full bg-background text-foreground">
-        <div className="min-h-full flex flex-col justify-center items-center px-4">
-          <div className="max-w-md w-full text-center space-y-4">
-            <div className="text-6xl font-bold text-danger">500</div>
-            <h1 className="text-2xl font-semibold text-carbon-900">Something went wrong</h1>
-            <p className="text-carbon-600">
-              We're experiencing technical difficulties. Please try again later.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Try Again
-            </button>
+        <NotificationProvider>
+          <div className="min-h-full flex flex-col justify-center items-center px-4">
+            <div className="max-w-md w-full text-center space-y-4">
+              <div className="text-6xl font-bold text-danger">500</div>
+              <h1 className="text-2xl font-semibold text-carbon-900">Something went wrong</h1>
+              <p className="text-carbon-600">
+                We're experiencing technical difficulties. Please try again later.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
-        </div>
+        </NotificationProvider>
         <Scripts />
       </body>
     </html>

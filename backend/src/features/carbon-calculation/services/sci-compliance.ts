@@ -41,8 +41,10 @@ class SCIComplianceService {
     try {
       logger.info('SCI calculation started', {
         activityType: activityData.activityType,
-        energyKWh,
-        location: activityData.location?.country
+        metadata: { 
+          energyKWh,
+          location: activityData.location?.country 
+        }
       });
 
       const [carbonIntensity, embodiedEmissions, functionalUnit] = await Promise.all([
@@ -79,12 +81,14 @@ class SCIComplianceService {
       const duration = Date.now() - startTime;
       logger.info('SCI calculation completed', {
         activityType: activityData.activityType,
-        sciValue: Math.round(calculation.sciValue * 1000000) / 1000000,
-        sciRating: calculation.sciRating,
-        operationalEmissions: Math.round(operationalEmissions * 1000000) / 1000000,
-        embodiedEmissions: Math.round(totalEmbodiedEmissions * 1000000) / 1000000,
-        functionalUnit: functionalUnit.value,
-        duration: `${duration}ms`
+        metadata: { 
+          sciValue: Math.round(calculation.sciValue * 1000000) / 1000000,
+          sciRating: calculation.sciRating,
+          operationalEmissions: Math.round(operationalEmissions * 1000000) / 1000000,
+          embodiedEmissions: Math.round(totalEmbodiedEmissions * 1000000) / 1000000,
+          functionalUnit: functionalUnit.value,
+          duration: `${duration}ms`
+        }
       });
 
       return calculation;
@@ -97,8 +101,10 @@ class SCIComplianceService {
           stack: error.stack
         },
         activityType: activityData.activityType,
-        energyKWh,
-        duration: `${Date.now() - startTime}ms`
+        metadata: { 
+          energyKWh,
+          duration: `${Date.now() - startTime}ms` 
+        }
       });
       throw error;
     }
@@ -114,7 +120,7 @@ class SCIComplianceService {
     
     try {
       const [gsfData, electricityMapsData, epaData] = await Promise.all([
-        externalAPIService.getGSFData(location),
+        externalAPIService.getGSFCarbonData(location),
         externalAPIService.getElectricityMapsData(zone),
         activityData.location?.postalCode ? 
           epaGridService.getEmissionFactorByPostalCode(activityData.location.postalCode) :
@@ -137,7 +143,7 @@ class SCIComplianceService {
     } catch (error: any) {
       logger.warn('Failed to get marginal emission factor, using average', {
         error: error.message,
-        location
+        metadata: { location }
       });
       return this.getAverageEmissionFactor(activityData);
     }
@@ -429,7 +435,7 @@ class SCIComplianceService {
     this.config = { ...this.config, ...newConfig };
     
     logger.info('SCI compliance config updated', {
-      config: this.config
+      metadata: { config: this.config }
     });
   }
 

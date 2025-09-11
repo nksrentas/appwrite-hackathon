@@ -15,7 +15,7 @@ import {
 import { epaGridService } from '@features/carbon-calculation/integrations/epa-egrid';
 import { externalAPIService } from '@features/carbon-calculation/integrations/external-apis';
 import { logger } from '@shared/utils/logger';
-import { performanceMonitor } from '@shared/utils/performance';
+// import { performanceMonitor } from '@shared/utils/performance';
 
 interface CalculationContext {
   activityData: ActivityData;
@@ -37,7 +37,7 @@ interface CalculationStep {
 
 class CarbonCalculationEngine {
   private readonly CONSERVATIVE_BIAS = 1.15;
-  private readonly MIN_CONFIDENCE_THRESHOLD = 0.6;
+  // private readonly MIN_CONFIDENCE_THRESHOLD = 0.6;
   private readonly PERFORMANCE_TARGET_MS = 100;
 
   constructor() {
@@ -46,8 +46,7 @@ class CarbonCalculationEngine {
 
   private initializeEmissionFactors(): void {
     logger.info('Carbon calculation engine initialized', {
-      conservativeBias: this.CONSERVATIVE_BIAS,
-      performanceTarget: `${this.PERFORMANCE_TARGET_MS}ms`
+      metadata: { conservativeBias: this.CONSERVATIVE_BIAS, performanceTarget: `${this.PERFORMANCE_TARGET_MS}ms` }
     });
   }
 
@@ -58,8 +57,7 @@ class CarbonCalculationEngine {
     try {
       logger.info('Carbon calculation started', {
         activityType: activityData.activityType,
-        requestId,
-        location: activityData.location?.country
+        metadata: { requestId, location: activityData.location?.country }
       });
 
       const context = await this.buildCalculationContext(activityData, requestId);
@@ -78,7 +76,7 @@ class CarbonCalculationEngine {
           stack: error.stack
         },
         activityType: activityData.activityType,
-        requestId,
+        metadata: { requestId },
         duration: `${Date.now() - startTime}ms`
       });
 
@@ -87,19 +85,19 @@ class CarbonCalculationEngine {
   }
 
   private async buildCalculationContext(
-    activityData: ActivityData, 
+    _activityData: ActivityData, 
     requestId: string
   ): Promise<CalculationContext> {
     const timestamp = new Date().toISOString();
     
     const [emissionFactors, conversionFactors, methodology] = await Promise.all([
-      this.getEmissionFactors(activityData),
-      this.getConversionFactors(activityData),
-      this.getMethodology(activityData.activityType)
+      this.getEmissionFactors(_activityData),
+      this.getConversionFactors(_activityData),
+      this.getMethodology(_activityData.activityType)
     ]);
 
     return {
-      activityData,
+      activityData: _activityData,
       emissionFactors,
       conversionFactors,
       timestamp,
@@ -165,7 +163,7 @@ class CarbonCalculationEngine {
 
   private async calculateCPUEmission(
     activity: CloudComputeActivity, 
-    context: CalculationContext
+    _context: CalculationContext
   ): Promise<CalculationStep> {
     const baseCPUPower = this.getCPUPowerConsumption(activity.metadata.instanceType || 'medium');
     const utilizationFactor = 0.12;
@@ -189,7 +187,7 @@ class CarbonCalculationEngine {
 
   private async calculateMemoryEmission(
     activity: CloudComputeActivity,
-    context: CalculationContext
+    _context: CalculationContext
   ): Promise<CalculationStep> {
     const memoryPowerPerGB = 0.38;
     const memoryGB = activity.metadata.memoryGbHours || 
@@ -215,7 +213,7 @@ class CarbonCalculationEngine {
 
   private async calculateNetworkEmission(
     activity: CloudComputeActivity,
-    context: CalculationContext
+    _context: CalculationContext
   ): Promise<CalculationStep> {
     const networkPowerPerGB = 0.006;
     const estimatedNetworkGB = 0.1;
@@ -346,7 +344,7 @@ class CarbonCalculationEngine {
     }];
   }
 
-  private async calculateTransport(context: CalculationContext): Promise<CalculationStep[]> {
+  private async calculateTransport(_context: CalculationContext): Promise<CalculationStep[]> {
     return [{
       name: 'transport_emission',
       description: 'Transport carbon emission (estimated)',
@@ -357,7 +355,7 @@ class CarbonCalculationEngine {
     }];
   }
 
-  private async calculateCommit(context: CalculationContext): Promise<CalculationStep[]> {
+  private async calculateCommit(_context: CalculationContext): Promise<CalculationStep[]> {
     const baseEmission = 0.0001;
     const commitComplexity = Math.random() * 0.0005 + baseEmission;
     
@@ -371,7 +369,7 @@ class CarbonCalculationEngine {
     }];
   }
 
-  private async calculateDeployment(context: CalculationContext): Promise<CalculationStep[]> {
+  private async calculateDeployment(_context: CalculationContext): Promise<CalculationStep[]> {
     const baseEmission = 0.005;
     const deploymentComplexity = Math.random() * 0.02 + baseEmission;
     
@@ -387,8 +385,8 @@ class CarbonCalculationEngine {
 
   private buildCalculationResult(
     steps: CalculationStep[],
-    context: CalculationContext,
-    startTime: number
+    _context: CalculationContext,
+    _startTime: number
   ): CarbonCalculationResult {
     const totalEmission = steps.reduce((sum, step) => sum + step.value, 0);
     const avgConfidence = steps.reduce((sum, step) => sum + step.confidence, 0) / steps.length;
@@ -400,49 +398,48 @@ class CarbonCalculationEngine {
     };
 
     const auditEntry: AuditEntry = {
-      timestamp: context.timestamp,
+      timestamp: _context.timestamp,
       action: 'calculate',
       details: {
-        requestId: context.requestId,
         version: '1.0.0'
       },
       systemInfo: {
         version: '1.0.0',
         environment: process.env.NODE_ENV || 'development',
-        requestId: context.requestId
+        requestId: _context.requestId
       }
     };
 
     const sources = Array.from(new Set(steps.flatMap(step => step.sources))).map(source => ({
       name: source,
       type: 'Custom' as const,
-      lastUpdated: context.timestamp,
+      lastUpdated: _context.timestamp,
       freshness: 'real_time' as const,
       reliability: 0.85,
       coverage: {
         geographic: ['Global'],
         temporal: 'Current',
-        activities: [context.activityData.activityType]
+        activities: [_context.activityData.activityType]
       }
     }));
 
     return {
       carbonKg: Math.round(totalEmission * 100000) / 100000,
       confidence,
-      methodology: context.methodology,
+      methodology: _context.methodology,
       sources,
       uncertaintyRange,
-      calculatedAt: context.timestamp,
+      calculatedAt: _context.timestamp,
       validUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       auditTrail: [auditEntry]
     };
   }
 
   private buildErrorResult(
-    activityData: ActivityData,
+    _activityData: ActivityData,
     error: Error,
     requestId: string,
-    startTime: number
+    _startTime: number
   ): CarbonCalculationResult {
     const fallbackEmission = 0.001;
     
@@ -450,7 +447,6 @@ class CarbonCalculationEngine {
       timestamp: new Date().toISOString(),
       action: 'calculate',
       details: {
-        requestId,
         reason: `Calculation failed: ${error.message}`,
         version: '1.0.0'
       },
@@ -502,7 +498,7 @@ class CarbonCalculationEngine {
     return factors;
   }
 
-  private async getConversionFactors(activityData: ActivityData): Promise<ConversionFactor[]> {
+  private async getConversionFactors(_activityData: ActivityData): Promise<ConversionFactor[]> {
     return [
       {
         from: 'kWh',
@@ -521,7 +517,7 @@ class CarbonCalculationEngine {
     ];
   }
 
-  private async getMethodology(activityType: string): Promise<CalculationMethodology> {
+  private async getMethodology(_activityType: string): Promise<CalculationMethodology> {
     return {
       name: 'EcoTrace Scientific Carbon Calculation',
       version: '1.0.0',
@@ -602,11 +598,11 @@ class CarbonCalculationEngine {
   }
 
   private logPerformanceMetrics(
-    startTime: number,
+    _startTime: number,
     result: CarbonCalculationResult,
     requestId: string
   ): void {
-    const totalTime = Date.now() - startTime;
+    const totalTime = Date.now() - _startTime;
     
     const metrics: PerformanceMetrics = {
       calculationTime: totalTime,
@@ -621,20 +617,107 @@ class CarbonCalculationEngine {
     
     logger.info('Carbon calculation performance', {
       requestId,
-      metrics,
-      meetsTarget: meetsPerfTarget,
+      metadata: { metrics, meetsTarget: meetsPerfTarget },
       carbonKg: result.carbonKg,
       confidence: result.confidence
     });
 
     if (!meetsPerfTarget) {
       logger.warn('Performance target exceeded', {
-        requestId,
-        target: `${this.PERFORMANCE_TARGET_MS}ms`,
-        actual: `${totalTime}ms`,
-        overage: `${totalTime - this.PERFORMANCE_TARGET_MS}ms`
+        metadata: { 
+          requestId, 
+          target: `${this.PERFORMANCE_TARGET_MS}ms`, 
+          actual: `${totalTime}ms`,
+          overage: `${totalTime - this.PERFORMANCE_TARGET_MS}ms`
+        }
       });
     }
+  }
+
+  public async getPublicMethodology(activityType: string) {
+    return await this.getMethodology(activityType);
+  }
+
+  public async getDataSources() {
+    return {
+      sources: [
+        {
+          name: 'EPA eGRID',
+          description: 'US Environmental Protection Agency eGRID database',
+          coverage: 'United States',
+          updateFrequency: 'Annual',
+          confidence: 'high',
+          lastUpdated: new Date().toISOString()
+        },
+        {
+          name: 'Electricity Maps',
+          description: 'Real-time electricity carbon intensity data',
+          coverage: 'Global',
+          updateFrequency: 'Real-time',
+          confidence: 'high',
+          lastUpdated: new Date().toISOString()
+        },
+        {
+          name: 'AWS Carbon API',
+          description: 'AWS cloud infrastructure carbon data',
+          coverage: 'AWS regions',
+          updateFrequency: 'Hourly',
+          confidence: 'high',
+          lastUpdated: new Date().toISOString()
+        }
+      ],
+      methodology: 'Multi-source validation with conservative estimation',
+      totalSources: 3
+    };
+  }
+
+  public async getConfidenceIndicators() {
+    return {
+      indicators: [
+        {
+          name: 'Data Age',
+          description: 'How recent the emission factor data is',
+          weight: 0.3,
+          thresholds: {
+            high: '< 1 hour',
+            medium: '1-24 hours',
+            low: '> 24 hours'
+          }
+        },
+        {
+          name: 'Source Validation',
+          description: 'Number of sources confirming the data',
+          weight: 0.4,
+          thresholds: {
+            high: '3+ sources',
+            medium: '2 sources',
+            low: '1 source'
+          }
+        },
+        {
+          name: 'Regional Accuracy',
+          description: 'Precision of geographic mapping',
+          weight: 0.2,
+          thresholds: {
+            high: 'Postal code level',
+            medium: 'Regional level',
+            low: 'Country level'
+          }
+        },
+        {
+          name: 'Temporal Alignment',
+          description: 'Alignment with activity timestamp',
+          weight: 0.1,
+          thresholds: {
+            high: 'Same hour',
+            medium: 'Same day',
+            low: 'Different day'
+          }
+        }
+      ],
+      overall_confidence_calculation: 'Weighted average of all indicators',
+      conservative_bias: '15% safety margin applied to all calculations'
+    };
   }
 }
 

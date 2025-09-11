@@ -2,7 +2,7 @@ import {
   ActivityData, 
   CarbonCalculationResult, 
   ValidationResult, 
-  DataSource,
+  // DataSource,
   PerformanceMetrics
 } from '@features/carbon-calculation/types';
 import { carbonCalculationEngine } from '@features/carbon-calculation/services/calculation-engine';
@@ -11,7 +11,7 @@ import { auditService } from '@features/carbon-calculation/services/audit-servic
 import { epaGridService } from '@features/carbon-calculation/integrations/epa-egrid';
 import { externalAPIService } from '@features/carbon-calculation/integrations/external-apis';
 import { logger } from '@shared/utils/logger';
-import { performanceMonitor } from '@shared/utils/performance';
+// import { performanceMonitor } from '@shared/utils/performance';
 
 interface CarbonServiceResponse {
   calculation: CarbonCalculationResult;
@@ -44,9 +44,11 @@ class CarbonCalculationService {
 
   constructor() {
     logger.info('Carbon calculation service initialized', {
-      service: this.SERVICE_NAME,
-      version: this.VERSION,
-      performanceTarget: `${this.PERFORMANCE_TARGET_MS}ms`
+      metadata: {
+        service: this.SERVICE_NAME,
+        version: this.VERSION,
+        performanceTarget: `${this.PERFORMANCE_TARGET_MS}ms`
+      }
     });
   }
 
@@ -59,10 +61,12 @@ class CarbonCalculationService {
 
     try {
       logger.info('Carbon calculation request started', {
-        requestId,
-        activityType: activityData.activityType,
-        location: activityData.location?.country,
-        service: this.SERVICE_NAME
+        metadata: {
+          requestId,
+          activityType: activityData.activityType,
+          location: activityData.location?.country,
+          service: this.SERVICE_NAME
+        }
       });
 
       const validationStartTime = Date.now();
@@ -72,9 +76,11 @@ class CarbonCalculationService {
       if (!inputValidation.isValid) {
         const error = new Error(`Input validation failed: ${inputValidation.errors.map(e => e.message).join(', ')}`);
         logger.error('Input validation failed', {
-          requestId,
-          errors: inputValidation.errors,
-          warnings: inputValidation.warnings
+          metadata: {
+            requestId,
+            errors: inputValidation.errors,
+            warnings: inputValidation.warnings
+          }
         });
         throw error;
       }
@@ -121,21 +127,25 @@ class CarbonCalculationService {
       const meetsPerfTarget = totalTime <= this.PERFORMANCE_TARGET_MS;
 
       logger.info('Carbon calculation completed successfully', {
-        requestId,
-        auditId,
-        carbonKg: calculation.carbonKg,
-        confidence: calculation.confidence,
-        totalTime: `${totalTime}ms`,
-        meetsPerfTarget,
-        validationPassed: resultValidation.isValid
+        metadata: {
+          requestId,
+          auditId,
+          carbonKg: calculation.carbonKg,
+          confidence: calculation.confidence,
+          totalTime: `${totalTime}ms`,
+          meetsPerfTarget,
+          validationPassed: resultValidation.isValid
+        }
       });
 
       if (!meetsPerfTarget) {
         logger.warn('Performance target exceeded', {
-          requestId,
-          target: `${this.PERFORMANCE_TARGET_MS}ms`,
-          actual: `${totalTime}ms`,
-          overage: `${totalTime - this.PERFORMANCE_TARGET_MS}ms`
+          metadata: {
+            requestId,
+            target: `${this.PERFORMANCE_TARGET_MS}ms`,
+            actual: `${totalTime}ms`,
+            overage: `${totalTime - this.PERFORMANCE_TARGET_MS}ms`
+          }
         });
       }
 
@@ -155,7 +165,7 @@ class CarbonCalculationService {
         duration: `${totalTime}ms`
       });
 
-      const fallbackCalculation = this.createFallbackResult(activityData, error, requestId);
+      const fallbackCalculation = this.createFallbackResult(error, requestId);
       const fallbackValidation = this.createFallbackValidation(error);
       
       const performance: PerformanceMetrics = {
@@ -336,7 +346,9 @@ class CarbonCalculationService {
           message: error.message,
           stack: error.stack
         },
-        auditId
+        metadata: {
+          auditId
+        }
       });
 
       return {
@@ -418,7 +430,7 @@ class CarbonCalculationService {
   }
 
   private createFallbackResult(
-    activityData: ActivityData,
+    // activityData: ActivityData,
     error: Error,
     requestId: string
   ): CarbonCalculationResult {
@@ -447,7 +459,6 @@ class CarbonCalculationService {
         timestamp,
         action: 'calculate',
         details: {
-          requestId,
           reason: `Fallback calculation due to error: ${error.message}`,
           version: '1.0.0'
         },

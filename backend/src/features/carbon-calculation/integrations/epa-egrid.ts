@@ -1,11 +1,11 @@
 import axios from 'axios';
 import * as cron from 'node-cron';
 import { parse } from 'csv-parse';
-import * as fs from 'fs';
-import * as path from 'path';
+// import * as fs from 'fs';
+// import * as path from 'path';
 import { EPAGridData, DataSource } from '@features/carbon-calculation/types';
 import { logger } from '@shared/utils/logger';
-import { CacheService, CacheOptions } from '@shared/utils/cache';
+import { CacheService } from '@shared/utils/cache';
 
 interface EPAGridResponse {
   results: {
@@ -27,12 +27,12 @@ interface EPASubregionData {
   quarter: number;
 }
 
-interface ZipCodeData {
-  zip: string;
-  state: string;
-  county: string;
-  subregion: string;
-}
+// interface ZipCodeData {
+//   zip: string;
+//   state: string;
+//   county: string;
+//   subregion: string;
+// }
 
 interface PostalCodeMapping {
   postalCode: string;
@@ -88,16 +88,18 @@ class EPAGridService {
 
   private async loadInitialData(): Promise<void> {
     try {
-      const cachedData = await this.cache.get<{
+      const cachedData = await this.cache.get('complete_dataset') as {
         postalCodes: PostalCodeMapping[];
         emissionFactors: EPAGridData[];
-      }>('complete_dataset');
+      } | null;
 
       if (cachedData && this.isCacheValid(cachedData)) {
         this.loadFromCache(cachedData);
         logger.info('EPA eGRID data loaded from cache', {
-          postalCodeCount: this.postalCodeMappings.size,
-          emissionFactorCount: this.emissionFactors.size
+          metadata: { 
+            postalCodeCount: this.postalCodeMappings.size,
+            emissionFactorCount: this.emissionFactors.size 
+          }
         });
       } else {
         await this.updateGridData();
@@ -201,8 +203,10 @@ class EPAGridService {
     });
 
     logger.info('EPA eGRID fallback data loaded', {
-      subregions: fallbackEmissionFactors.length,
-      postalCodeMappings: this.postalCodeMappings.size
+      metadata: { 
+        subregions: fallbackEmissionFactors.length,
+        postalCodeMappings: this.postalCodeMappings.size 
+      }
     });
   }
 
@@ -229,9 +233,11 @@ class EPAGridService {
 
       const duration = Date.now() - startTime;
       logger.info('EPA eGRID data update completed', {
-        duration: `${duration}ms`,
-        subregions: this.emissionFactors.size,
-        postalCodeMappings: this.postalCodeMappings.size
+        metadata: { 
+          duration: `${duration}ms`,
+          subregions: this.emissionFactors.size,
+          postalCodeMappings: this.postalCodeMappings.size 
+        }
       });
 
     } catch (error: any) {
@@ -283,7 +289,7 @@ class EPAGridService {
   }
 
   private async downloadAndParseEGridData(): Promise<EPASubregionData[]> {
-    const dataUrl = 'https://www.epa.gov/sites/default/files/2023-01/egrid2021_summary_tables.xlsx';
+    // const _dataUrl = 'https://www.epa.gov/sites/default/files/2023-01/egrid2021_summary_tables.xlsx';
     const csvUrl = 'https://www.epa.gov/sites/default/files/2023-01/egrid2021_data.csv';
     
     try {
@@ -318,11 +324,11 @@ class EPAGridService {
           })
           .on('end', () => {
             logger.info('EPA eGRID CSV data parsed successfully', {
-              recordCount: results.length
+              metadata: { recordCount: results.length }
             });
             resolve(results);
           })
-          .on('error', (error) => {
+          .on('error', (error: any) => {
             logger.error('EPA eGRID CSV parsing failed', { error });
             reject(error);
           });
@@ -366,11 +372,11 @@ class EPAGridService {
           })
           .on('end', () => {
             logger.info('EPA eGRID ZIP code mappings parsed successfully', {
-              mappingCount: mappings.length
+              metadata: { mappingCount: mappings.length }
             });
             resolve(mappings);
           })
-          .on('error', (error) => {
+          .on('error', (error: any) => {
             logger.error('EPA eGRID ZIP code mapping parsing failed', { error });
             reject(error);
           });
@@ -540,8 +546,10 @@ class EPAGridService {
     });
 
     logger.info('EPA eGRID emission factors processed', {
-      factorCount: this.emissionFactors.size,
-      subregions: Array.from(this.emissionFactors.keys())
+      metadata: { 
+        factorCount: this.emissionFactors.size,
+        subregions: Array.from(this.emissionFactors.keys()) 
+      }
     });
   }
 
@@ -561,8 +569,10 @@ class EPAGridService {
       mapping = this.findNearestMapping(prefix);
       if (!mapping) {
         logger.warn('EPA eGRID postal code mapping not found', {
-          postalCode: prefix,
-          availableMappings: this.postalCodeMappings.size
+          metadata: { 
+            postalCode: prefix,
+            availableMappings: this.postalCodeMappings.size 
+          }
         });
         return null;
       }
@@ -572,8 +582,10 @@ class EPAGridService {
     
     if (!emissionFactor) {
       logger.warn('EPA eGRID emission factor not found', {
-        subregion: mapping.subregion,
-        postalCode: prefix
+        metadata: { 
+          subregion: mapping.subregion,
+          postalCode: prefix 
+        }
       });
       return null;
     }
@@ -584,12 +596,12 @@ class EPAGridService {
     return enrichedFactor;
   }
 
-  private findNearestMapping(postalCode: string): PostalCodeMapping | null {
+  private findNearestMapping(postalCode: string): PostalCodeMapping | undefined {
     const targetCode = parseInt(postalCode);
-    let nearestMapping: PostalCodeMapping | null = null;
+    let nearestMapping: PostalCodeMapping | undefined = undefined;
     let smallestDistance = Infinity;
 
-    for (const [code, mapping] of this.postalCodeMappings) {
+    for (const [code, mapping] of Array.from(this.postalCodeMappings.entries())) {
       const distance = Math.abs(parseInt(code) - targetCode);
       if (distance < smallestDistance) {
         smallestDistance = distance;
@@ -599,20 +611,22 @@ class EPAGridService {
 
     if (nearestMapping && smallestDistance <= 100) {
       logger.info('Using nearest postal code mapping', {
-        requestedCode: postalCode,
-        nearestCode: nearestMapping.postalCode,
-        distance: smallestDistance,
-        subregion: nearestMapping.subregion
+        metadata: {
+          requestedCode: postalCode,
+          nearestCode: nearestMapping.postalCode,
+          distance: smallestDistance,
+          subregion: nearestMapping.subregion
+        }
       });
       return nearestMapping;
     }
 
-    return null;
+    return undefined;
   }
 
   private getPostalCodesForSubregion(subregion: string): string[] {
     const codes: string[] = [];
-    for (const [code, mapping] of this.postalCodeMappings) {
+    for (const [code, mapping] of Array.from(this.postalCodeMappings.entries())) {
       if (mapping.subregion === subregion) {
         codes.push(code);
       }

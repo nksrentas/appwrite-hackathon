@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import * as cron from 'node-cron';
 import CircuitBreaker from 'opossum';
 import { 
@@ -9,6 +9,11 @@ import {
 } from '@features/carbon-calculation/types';
 import { logger } from '@shared/utils/logger';
 import { CacheService } from '@shared/utils/cache';
+
+// Extend Axios config to include metadata
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  metadata?: { startTime: number; service: string };
+}
 
 interface ExternalAPIError {
   service: string;
@@ -44,9 +49,9 @@ class ExternalAPIIntegrations {
   private gsfClient: AxiosInstance;
   private cache: CacheService;
   
-  private electricityMapsBreaker: CircuitBreaker;
-  private awsBreaker: CircuitBreaker;
-  private gsfBreaker: CircuitBreaker;
+  private electricityMapsBreaker!: CircuitBreaker;
+  private awsBreaker!: CircuitBreaker;
+  private gsfBreaker!: CircuitBreaker;
   
   private healthMetrics: Map<string, APIHealthMetrics> = new Map();
   private rateLimits: Map<string, { requests: number; resetTime: number; limit: number }> = new Map();
@@ -132,22 +137,28 @@ class ExternalAPIIntegrations {
     [this.electricityMapsBreaker, this.awsBreaker, this.gsfBreaker].forEach(breaker => {
       breaker.on('open', () => {
         logger.warn(`Circuit breaker opened for ${breaker.name}`, {
-          service: breaker.name,
-          state: 'open'
+          metadata: {
+            service: breaker.name,
+            state: 'open'
+          }
         });
       });
 
       breaker.on('halfOpen', () => {
         logger.info(`Circuit breaker half-open for ${breaker.name}`, {
-          service: breaker.name,
-          state: 'half-open'
+          metadata: {
+            service: breaker.name,
+            state: 'half-open'
+          }
         });
       });
 
       breaker.on('close', () => {
         logger.info(`Circuit breaker closed for ${breaker.name}`, {
-          service: breaker.name,
-          state: 'closed'
+          metadata: {
+            service: breaker.name,
+            state: 'closed'
+          }
         });
       });
 
@@ -157,7 +168,9 @@ class ExternalAPIIntegrations {
             message: error.message,
             code: error.code || 'UNKNOWN'
           },
-          service: breaker.name
+          metadata: {
+            service: breaker.name
+          }
         });
       });
     });
@@ -168,8 +181,8 @@ class ExternalAPIIntegrations {
       const serviceName = ['ElectricityMaps', 'AWS', 'GSF'][index];
       
       client.interceptors.request.use(
-        (config) => {
-          config.metadata = { startTime: Date.now(), service: serviceName };
+        (config: InternalAxiosRequestConfig) => {
+          (config as ExtendedAxiosRequestConfig).metadata = { startTime: Date.now(), service: serviceName };
           this.updateRateLimit(serviceName);
           return config;
         },
@@ -178,13 +191,13 @@ class ExternalAPIIntegrations {
 
       client.interceptors.response.use(
         (response) => {
-          const responseTime = Date.now() - (response.config.metadata?.startTime || 0);
+          const responseTime = Date.now() - ((response.config as ExtendedAxiosRequestConfig).metadata?.startTime || 0);
           this.updateHealthMetrics(serviceName, true, responseTime);
           this.handleRateLimitHeaders(serviceName, response.headers);
           return response;
         },
         (error) => {
-          const responseTime = Date.now() - (error.config?.metadata?.startTime || 0);
+          const responseTime = Date.now() - ((error.config as ExtendedAxiosRequestConfig)?.metadata?.startTime || 0);
           this.updateHealthMetrics(serviceName, false, responseTime, error);
           this.handleRateLimitHeaders(serviceName, error.response?.headers);
           return Promise.reject(error);
@@ -342,14 +355,14 @@ class ExternalAPIIntegrations {
 
   public async getElectricityMapsData(zone: string): Promise<ElectricityMapsData | null> {
     const cacheKey = `electricity_maps_${zone}`;
-    const cached = await this.cache.get<ElectricityMapsData>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as ElectricityMapsData | null;
     
     if (cached && this.isCacheValid(cached.timestamp, 300000)) {
       return cached;
     }
 
     try {
-      const data = await this.electricityMapsBreaker.fire(zone);
+      const data = await this.electricityMapsBreaker.fire(zone) as ElectricityMapsData | null;
       
       if (data) {
         await this.cache.set(cacheKey, data, { ttl: 300000 });
@@ -358,9 +371,11 @@ class ExternalAPIIntegrations {
       return data;
     } catch (error: any) {
       logger.warn('Electricity Maps API failed, using cached data if available', {
-        zone,
-        error: error.message,
-        cacheAvailable: !!cached
+        metadata: {
+          zone,
+          error: error.message,
+          cacheAvailable: !!cached
+        }
       });
       
       return cached || null;
@@ -386,14 +401,14 @@ class ExternalAPIIntegrations {
 
   public async getAWSCarbonData(region: string, service: string): Promise<AWSCarbonData | null> {
     const cacheKey = `aws_carbon_${region}_${service}`;
-    const cached = await this.cache.get<AWSCarbonData>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as AWSCarbonData | null;
     
     if (cached && this.isCacheValid(cached.timestamp, 900000)) {
       return cached;
     }
 
     try {
-      const data = await this.awsBreaker.fire(region, service);
+      const data = await this.awsBreaker.fire(region, service) as AWSCarbonData | null;
       
       if (data) {
         await this.cache.set(cacheKey, data, { ttl: 900000 });
@@ -402,10 +417,12 @@ class ExternalAPIIntegrations {
       return data;
     } catch (error: any) {
       logger.warn('AWS Carbon API failed, using cached data if available', {
-        region,
-        service,
-        error: error.message,
-        cacheAvailable: !!cached
+        metadata: {
+          region,
+          service,
+          error: error.message,
+          cacheAvailable: !!cached
+        }
       });
       
       return cached || null;
@@ -431,14 +448,14 @@ class ExternalAPIIntegrations {
 
   public async getGSFCarbonData(region: string): Promise<GSFCarbonData | null> {
     const cacheKey = `gsf_carbon_${region}`;
-    const cached = await this.cache.get<GSFCarbonData>(cacheKey);
+    const cached = await this.cache.get(cacheKey) as GSFCarbonData | null;
     
     if (cached && this.isCacheValid(cached.timestamp, 600000)) {
       return cached;
     }
 
     try {
-      const data = await this.gsfBreaker.fire(region);
+      const data = await this.gsfBreaker.fire(region) as GSFCarbonData | null;
       
       if (data) {
         await this.cache.set(cacheKey, data, { ttl: 600000 });
@@ -447,9 +464,11 @@ class ExternalAPIIntegrations {
       return data;
     } catch (error: any) {
       logger.warn('GSF API failed, using cached data if available', {
-        region,
-        error: error.message,
-        cacheAvailable: !!cached
+        metadata: {
+          region,
+          error: error.message,
+          cacheAvailable: !!cached
+        }
       });
       
       return cached || null;
@@ -468,7 +487,8 @@ class ExternalAPIIntegrations {
       carbonIntensity: response.data.carbon_intensity || 0,
       timestamp: response.data.timestamp || new Date().toISOString(),
       methodology: response.data.methodology || 'SCI_Specification',
-      confidence: response.data.confidence || 'medium'
+      confidence: response.data.confidence || 'medium',
+      source: 'Green_Software_Foundation_API'
     };
   }
 
@@ -494,28 +514,28 @@ class ExternalAPIIntegrations {
     const circuitBreakers: CircuitBreakerState[] = [
       {
         service: 'ElectricityMaps',
-        state: this.electricityMapsBreaker.state as any,
+        state: (this.electricityMapsBreaker as any).state || 'unknown',
         isOpen: this.electricityMapsBreaker.opened,
-        failureCount: this.electricityMapsBreaker.stats.failures || 0,
-        successCount: this.electricityMapsBreaker.stats.successes || 0,
+        failureCount: (this.electricityMapsBreaker as any).stats?.failures || 0,
+        successCount: (this.electricityMapsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.electricityMapsBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       },
       {
         service: 'AWS',
-        state: this.awsBreaker.state as any,
+        state: (this.awsBreaker as any).state || 'unknown',
         isOpen: this.awsBreaker.opened,
-        failureCount: this.awsBreaker.stats.failures || 0,
-        successCount: this.awsBreaker.stats.successes || 0,
+        failureCount: (this.awsBreaker as any).stats?.failures || 0,
+        successCount: (this.awsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.awsBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       },
       {
         service: 'GSF',
-        state: this.gsfBreaker.state as any,
+        state: (this.gsfBreaker as any).state || 'unknown',
         isOpen: this.gsfBreaker.opened,
-        failureCount: this.gsfBreaker.stats.failures || 0,
-        successCount: this.gsfBreaker.stats.successes || 0,
+        failureCount: (this.gsfBreaker as any).stats?.failures || 0,
+        successCount: (this.gsfBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.gsfBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       }
@@ -595,28 +615,28 @@ class ExternalAPIIntegrations {
     return {
       electricityMaps: {
         service: 'ElectricityMaps',
-        state: this.electricityMapsBreaker.state as any,
+        state: (this.electricityMapsBreaker as any).state || 'unknown',
         isOpen: this.electricityMapsBreaker.opened,
-        failureCount: this.electricityMapsBreaker.stats.failures || 0,
-        successCount: this.electricityMapsBreaker.stats.successes || 0,
+        failureCount: (this.electricityMapsBreaker as any).stats?.failures || 0,
+        successCount: (this.electricityMapsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.electricityMapsBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       },
       aws: {
         service: 'AWS',
-        state: this.awsBreaker.state as any,
+        state: (this.awsBreaker as any).state || 'unknown',
         isOpen: this.awsBreaker.opened,
-        failureCount: this.awsBreaker.stats.failures || 0,
-        successCount: this.awsBreaker.stats.successes || 0,
+        failureCount: (this.awsBreaker as any).stats?.failures || 0,
+        successCount: (this.awsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.awsBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       },
       gsf: {
         service: 'GSF',
-        state: this.gsfBreaker.state as any,
+        state: (this.gsfBreaker as any).state || 'unknown',
         isOpen: this.gsfBreaker.opened,
-        failureCount: this.gsfBreaker.stats.failures || 0,
-        successCount: this.gsfBreaker.stats.successes || 0,
+        failureCount: (this.gsfBreaker as any).stats?.failures || 0,
+        successCount: (this.gsfBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.gsfBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       }
@@ -630,7 +650,7 @@ class ExternalAPIIntegrations {
       const cachePattern = svc.toLowerCase().replace(/[^a-z]/g, '_');
       await this.cache.delete(`*${cachePattern}*`);
       
-      logger.info(`Force refreshed cache for ${svc}`, { service: svc });
+      logger.info(`Force refreshed cache for ${svc}`, { metadata: { service: svc } });
     }
   }
 
@@ -642,19 +662,20 @@ class ExternalAPIIntegrations {
     percentageUsed: number;
     isNearLimit: boolean;
   }> {
-    const entries = service ? 
+    const entries: Array<[string, { requests: number; resetTime: number; limit: number } | undefined]> = service ? 
       [[service, this.rateLimits.get(service)]] : 
       Array.from(this.rateLimits.entries());
 
     return entries
-      .filter(([, rateLimit]) => rateLimit)
+      .filter((entry): entry is [string, { requests: number; resetTime: number; limit: number }] => 
+        entry[1] !== undefined)
       .map(([serviceName, rateLimit]) => {
-        const percentageUsed = Math.round((rateLimit!.requests / rateLimit!.limit) * 100);
+        const percentageUsed = Math.round((rateLimit.requests / rateLimit.limit) * 100);
         return {
           service: serviceName,
-          requests: rateLimit!.requests,
-          limit: rateLimit!.limit,
-          resetTime: new Date(rateLimit!.resetTime).toISOString(),
+          requests: rateLimit.requests,
+          limit: rateLimit.limit,
+          resetTime: new Date(rateLimit.resetTime).toISOString(),
           percentageUsed,
           isNearLimit: percentageUsed >= 80
         };

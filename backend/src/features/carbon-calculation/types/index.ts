@@ -101,7 +101,7 @@ export interface ConversionFactor {
 
 export interface DataSource {
   name: string;
-  type: 'EPA_eGRID' | 'AWS_Carbon' | 'Electricity_Maps' | 'Green_Software_Foundation' | 'IPCC' | 'Custom';
+  type: 'EPA_eGRID' | 'AWS_Carbon' | 'Electricity_Maps' | 'Green_Software_Foundation' | 'GSF_SCI' | 'IPCC' | 'Custom';
   lastUpdated: string;
   freshness: 'real_time' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annually';
   reliability: number;
@@ -173,11 +173,10 @@ export interface EPAGridData {
 export interface ElectricityMapsData {
   zone: string;
   carbonIntensity: number;
-  unit: 'gCO2eq/kWh';
   timestamp: string;
   source: 'real_time' | 'forecast' | 'historical';
-  renewable: number;
-  fossil: number;
+  fossilFreePercentage?: number | null;
+  renewablePercentage?: number | null;
 }
 
 export interface AWSCarbonData {
@@ -186,7 +185,16 @@ export interface AWSCarbonData {
   carbonIntensity: number;
   unit: string;
   timestamp: string;
-  source: 'Customer_Carbon_Footprint_Tool';
+  methodology: string;
+}
+
+export interface GSFCarbonData {
+  region: string;
+  carbonIntensity: number;
+  timestamp: string;
+  methodology: string;
+  confidence: 'low' | 'medium' | 'high' | 'very_high';
+  source: string;
 }
 
 export interface CircuitBreakerState {

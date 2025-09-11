@@ -91,10 +91,7 @@ class AuditService {
   private readonly RETENTION_DAYS = 365;
 
   constructor() {
-    this.cache = new CacheService('audit-trail', {
-      defaultTTL: 7 * 24 * 60 * 60 * 1000,
-      maxSize: this.MAX_CACHE_SIZE
-    });
+    this.cache = new CacheService();
 
     this.initializeMethodologyVersioning();
     this.scheduleCleanup();
@@ -124,9 +121,11 @@ class AuditService {
     this.methodologyVersions.set('1.0.0', initialMethodology);
 
     logger.info('Audit service initialized', {
-      initialMethodologyVersion: '1.0.0',
-      retentionDays: this.RETENTION_DAYS,
-      maxCacheSize: this.MAX_CACHE_SIZE
+      metadata: {
+        initialMethodologyVersion: '1.0.0',
+        retentionDays: this.RETENTION_DAYS,
+        maxCacheSize: this.MAX_CACHE_SIZE
+      }
     });
   }
 
@@ -172,7 +171,6 @@ class AuditService {
         timestamp: auditRecord.timestamp,
         action: 'calculate',
         details: {
-          requestId,
           version: calculationResult.methodology.version
         },
         systemInfo: {
@@ -185,12 +183,14 @@ class AuditService {
       calculationResult.auditTrail.push(auditEntry);
 
       logger.info('Calculation audit recorded', {
-        auditId,
-        requestId,
-        activityType: activityData.activityType,
-        carbonKg: calculationResult.carbonKg,
-        confidence: calculationResult.confidence,
-        responseTime: performanceMetrics.totalTime
+        metadata: {
+          auditId,
+          requestId,
+          activityType: activityData.activityType,
+          carbonKg: calculationResult.carbonKg,
+          confidence: calculationResult.confidence,
+          responseTime: performanceMetrics.totalTime
+        }
       });
 
       return auditId;
@@ -202,8 +202,10 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        requestId,
-        auditId
+        metadata: {
+          requestId,
+          auditId
+        }
       });
       throw error;
     }
@@ -224,11 +226,13 @@ class AuditService {
         await this.cache.set(`audit_${record.id}`, record);
 
         logger.info('Validation audit recorded', {
-          requestId,
-          auditId: record.id,
-          isValid: validationResults.isValid,
-          errorCount: validationResults.errors?.length || 0,
-          confidence: validationResults.confidence
+          metadata: {
+            requestId,
+            auditId: record.id,
+            isValid: validationResults.isValid,
+            errorCount: validationResults.errors?.length || 0,
+            confidence: validationResults.confidence
+          }
         });
       }
 
@@ -239,7 +243,9 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        requestId
+        metadata: {
+          requestId
+        }
       });
     }
   }
@@ -249,7 +255,7 @@ class AuditService {
       let record = this.auditRecords.get(auditId);
       
       if (!record) {
-        record = await this.cache.get<AuditRecord>(`audit_${auditId}`);
+        record = await this.cache.get(`audit_${auditId}`);
       }
 
       return record || null;
@@ -261,7 +267,9 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        auditId
+        metadata: {
+          auditId
+        }
       });
       return null;
     }
@@ -317,10 +325,12 @@ class AuditService {
       const hasMore = offset + limit < totalCount;
 
       logger.info('Audit records queried', {
-        query,
-        totalCount,
-        returnedCount: paginatedRecords.length,
-        hasMore
+        metadata: {
+          query,
+          totalCount,
+          returnedCount: paginatedRecords.length,
+          hasMore
+        }
       });
 
       return {
@@ -336,7 +346,9 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        query
+        metadata: {
+          query
+        }
       });
       
       return {
@@ -411,9 +423,11 @@ class AuditService {
       };
 
       logger.info('Audit statistics generated', {
-        totalCalculations,
-        dateRange,
-        errorRate: statistics.errorRate
+        metadata: {
+          totalCalculations,
+          dateRange,
+          errorRate: statistics.errorRate
+        }
       });
 
       return statistics;
@@ -425,7 +439,9 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        dateRange
+        metadata: {
+          dateRange
+        }
       });
 
       return {
@@ -461,10 +477,12 @@ class AuditService {
       await this.cache.set(`methodology_${newVersion}`, versionedMethodology);
 
       logger.info('New methodology version created', {
-        version: newVersion,
-        createdBy,
-        changeCount: changes.length,
-        standards: newMethodology.standards
+        metadata: {
+          version: newVersion,
+          createdBy,
+          changeCount: changes.length,
+          standards: newMethodology.standards
+        }
       });
 
       return newVersion;
@@ -476,7 +494,9 @@ class AuditService {
           message: error.message,
           stack: error.stack
         },
-        createdBy
+        metadata: {
+          createdBy
+        }
       });
       throw error;
     }
@@ -506,8 +526,10 @@ class AuditService {
       await this.cache.set(`methodology_${version}`, versionedMethodology);
 
       logger.info('Methodology version deprecated', {
-        version,
-        supersededBy
+        metadata: {
+          version,
+          supersededBy
+        }
       });
     }
   }
@@ -539,9 +561,11 @@ class AuditService {
 
     if (cleanedCount > 0) {
       logger.info('Audit records cleanup completed', {
-        cleanedCount,
-        remainingCount: this.auditRecords.size,
-        retentionDays: this.RETENTION_DAYS
+        metadata: {
+          cleanedCount,
+          remainingCount: this.auditRecords.size,
+          retentionDays: this.RETENTION_DAYS
+        }
       });
     }
   }
@@ -582,7 +606,7 @@ class AuditService {
 
     return {
       totalRecords: this.auditRecords.size,
-      cacheSize: this.cache.size || 0,
+      cacheSize: 0, // this.cache.size property not available
       methodologyVersions: this.methodologyVersions.size,
       oldestRecord: timestamps[0],
       newestRecord: timestamps[timestamps.length - 1]

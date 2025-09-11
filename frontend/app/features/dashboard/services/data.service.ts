@@ -74,7 +74,8 @@ const mockActivities = [
 ];
 
 class DataService {
-  private mockMode = true; // Enable mock mode for development
+  private mockMode = false; // Disable mock mode to use real backend
+  private baseUrl = 'http://localhost:3002/api/dashboard';
 
   async getUserProfile(userId: string) {
     if (this.mockMode) {
@@ -143,7 +144,34 @@ class DataService {
       };
     }
 
-    throw new Error('Failed to get user activities');
+    try {
+      const params = new URLSearchParams({
+        limit: (filters.limit || 50).toString(),
+        offset: (filters.offset || 0).toString(),
+      });
+
+      if (filters.type && filters.type.length > 0) {
+        params.append('type', filters.type.join(','));
+      }
+      if (filters.repository) {
+        params.append('repository', filters.repository);
+      }
+      if (filters.dateFrom) {
+        params.append('dateFrom', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        params.append('dateTo', filters.dateTo);
+      }
+
+      const response = await fetch(`${this.baseUrl}/activities/${userId}?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(`Failed to get user activities: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async getCarbonAnalytics(userId: string): Promise<CarbonAnalytics> {
@@ -159,7 +187,16 @@ class DataService {
       };
     }
 
-    throw new Error('Failed to get carbon analytics');
+    try {
+      const response = await fetch(`${this.baseUrl}/carbon/${userId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(`Failed to get carbon analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async getCarbonHistory(userId: string, period: 'week' | 'month' | 'quarter' = 'month') {
@@ -379,7 +416,31 @@ class DataService {
       };
     }
 
-    throw new Error('Failed to get dashboard summary');
+    try {
+      const [analytics, activities, stats] = await Promise.all([
+        this.getCarbonAnalytics(userId),
+        this.getUserActivities(userId, { limit: 5 }),
+        fetch(`${this.baseUrl}/stats/${userId}`).then(res => res.json()),
+      ]);
+
+      return {
+        totalCarbon: analytics.totalCarbon,
+        todayCarbon: stats.data?.todayCarbon || 0,
+        weekCarbon: analytics.weeklyCarbon,
+        monthCarbon: analytics.monthlyCarbon,
+        recentActivities: activities.documents,
+        leaderboardPosition: stats.data?.leaderboardPosition || null,
+        efficiencyScore: analytics.efficiencyScore,
+        carbonTrend:
+          analytics.trend === 'increasing'
+            ? 'up'
+            : analytics.trend === 'decreasing'
+              ? 'down'
+              : 'stable',
+      };
+    } catch (error) {
+      throw new Error(`Failed to get dashboard summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }
 

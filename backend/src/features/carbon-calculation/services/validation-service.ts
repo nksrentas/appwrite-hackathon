@@ -6,9 +6,9 @@ import {
   ValidationWarning,
   CrossReference,
   DataSource,
-  EPAGridData,
-  ElectricityMapsData,
-  AWSCarbonData
+  // EPAGridData,
+  // ElectricityMapsData,
+  // AWSCarbonData
 } from '../types';
 import { epaGridService } from '../integrations/epa-egrid';
 import { externalAPIService } from '../integrations/external-apis';
@@ -101,8 +101,10 @@ class DataValidationService {
     
     try {
       logger.info('Activity data validation started', {
-        activityType: activityData.activityType,
-        location: activityData.location?.country
+        metadata: {
+          activityType: activityData.activityType,
+          location: activityData.location?.country
+        }
       });
 
       const [
@@ -130,12 +132,14 @@ class DataValidationService {
 
       const duration = Date.now() - startTime;
       logger.info('Activity data validation completed', {
-        activityType: activityData.activityType,
-        isValid: result.isValid,
-        errorCount: allErrors.length,
-        warningCount: logicalWarnings.length,
-        confidence: result.confidence,
-        duration: `${duration}ms`
+        metadata: {
+          activityType: activityData.activityType,
+          isValid: result.isValid,
+          errorCount: allErrors.length,
+          warningCount: logicalWarnings.length,
+          confidence: result.confidence.toString(),
+          duration: `${duration}ms`
+        }
       });
 
       return result;
@@ -222,13 +226,15 @@ class DataValidationService {
 
       const duration = Date.now() - startTime;
       logger.info('Calculation result validation completed', {
-        carbonKg: result.carbonKg,
-        isValid: validationResult.isValid,
-        errorCount: allErrors.length,
-        warningCount: allWarnings.length,
-        confidence: validationResult.confidence,
-        hasConflicts: conflictResolution.hasConflicts,
-        duration: `${duration}ms`
+        metadata: {
+          carbonKg: result.carbonKg,
+          isValid: validationResult.isValid,
+          errorCount: allErrors.length,
+          warningCount: allWarnings.length,
+          confidence: validationResult.confidence.toString(),
+          hasConflicts: conflictResolution.hasConflicts,
+          duration: `${duration}ms`
+        }
       });
 
       return validationResult;
@@ -797,8 +803,10 @@ class DataValidationService {
 
   private async crossReferenceCalculation(
     activityData: ActivityData,
-    result: CarbonCalculationResult
+    _result: CarbonCalculationResult
   ): Promise<CrossReference[]> {
+    // Unused result variable commented out
+    // const _result = await this.performCrossReferencing(activityData);
     return await this.performCrossReferencing(activityData);
   }
 
@@ -825,12 +833,14 @@ class DataValidationService {
   }
 
   private calculateResultConfidence(
-    result: CarbonCalculationResult,
+    _result: CarbonCalculationResult,
     errors: ValidationError[],
     warnings: ValidationWarning[],
     crossReferences: CrossReference[]
   ): number {
     let confidence = 0.8;
+    // Unused result variable commented out
+    // const _result = crossReferences;
 
     errors.forEach(error => {
       switch (error.severity) {
@@ -889,7 +899,9 @@ class DataValidationService {
     this.config = { ...this.config, ...newConfig };
     
     logger.info('Validation config updated', {
-      config: this.config
+      metadata: {
+        config: this.config
+      }
     });
   }
 
@@ -1036,7 +1048,7 @@ class DataValidationService {
 
   private async getGSFComparison(activityData: ActivityData): Promise<DataSourceComparison | null> {
     const location = activityData.location?.country || 'US';
-    const gsfData = await externalAPIService.getGSFData(location);
+    const gsfData = await externalAPIService.getGSFCarbonData(location);
     if (!gsfData) return null;
 
     return {
@@ -1165,7 +1177,7 @@ class DataValidationService {
         
       case 'manual_override':
       default:
-        resolutionMethod = 'manual_override_required';
+        resolutionMethod = 'manual_override' as const;
         confidenceReduction = 0.3;
         break;
     }

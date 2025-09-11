@@ -1,10 +1,10 @@
-import axios from 'axios';
+// import axios from 'axios';
 import * as cron from 'node-cron';
 import { 
   ActivityData, 
   CarbonCalculationResult, 
   CrossReference, 
-  ValidationResult 
+  // ValidationResult 
 } from '@features/carbon-calculation/types';
 import { carbonCalculationEngine } from '@features/carbon-calculation/services/calculation-engine';
 import { logger } from '@shared/utils/logger';
@@ -105,8 +105,10 @@ class CrossValidationService {
     });
 
     logger.info('Cross-validation calculators initialized', {
-      totalCalculators: calculators.length,
-      enabledCalculators: calculators.filter(c => c.isEnabled).length
+      metadata: { 
+        totalCalculators: calculators.length,
+        enabledCalculators: calculators.filter(c => c.isEnabled).length 
+      }
     });
   }
 
@@ -132,21 +134,21 @@ class CrossValidationService {
   }
 
   public async validateCalculation(
-    activityData: ActivityData,
+    _activityData: ActivityData,
     ourResult: CarbonCalculationResult
   ): Promise<CrossReference[]> {
-    const startTime = Date.now();
+    // const _startTime = Date.now();
     const crossReferences: CrossReference[] = [];
 
     try {
       const supportedCalculators = Array.from(this.calculators.values())
         .filter(calc => 
           calc.isEnabled && 
-          calc.supportedActivities.includes(activityData.activityType)
+          calc.supportedActivities.includes(_activityData.activityType)
         );
 
       const validationPromises = supportedCalculators.map(calc => 
-        this.validateWithCalculator(calc, activityData, ourResult)
+        this.validateWithCalculator(calc, _activityData, ourResult)
       );
 
       const results = await Promise.allSettled(validationPromises);
@@ -170,7 +172,7 @@ class CrossValidationService {
     } catch (error: any) {
       logger.error('Cross-validation failed', {
         error: error.message,
-        activityType: activityData.activityType
+        activityType: _activityData.activityType
       });
     }
 
@@ -179,11 +181,11 @@ class CrossValidationService {
 
   private async validateWithCalculator(
     calculator: ExternalCalculator,
-    activityData: ActivityData,
+    _activityData: ActivityData,
     ourResult: CarbonCalculationResult
   ): Promise<CrossReference | null> {
     try {
-      const externalValue = this.getEstimateForCalculator(activityData, calculator.name);
+      const externalValue = this.getEstimateForCalculator(_activityData, calculator.name);
       const variance = Math.abs(ourResult.carbonKg - externalValue) / ourResult.carbonKg * 100;
       
       let status: 'match' | 'close' | 'divergent' | 'failed';
@@ -208,7 +210,7 @@ class CrossValidationService {
     }
   }
 
-  private getEstimateForCalculator(activityData: ActivityData, calculatorName: string): number {
+  private getEstimateForCalculator(_activityData: ActivityData, calculatorName: string): number {
     const calculator = this.calculators.get(calculatorName);
     const baseEmission = 0.001;
     
