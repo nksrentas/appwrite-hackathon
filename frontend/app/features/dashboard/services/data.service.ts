@@ -168,7 +168,15 @@ class DataService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const result = await response.json();
-      return result.data;
+      const data = result.data;
+      
+      // Map backend response to frontend interface
+      return {
+        documents: data.activities || [],
+        total: data.total || 0,
+        offset: filters.offset || 0,
+        limit: filters.limit || 50,
+      };
     } catch (error) {
       throw new Error(`Failed to get user activities: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -193,7 +201,18 @@ class DataService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const result = await response.json();
-      return result.data;
+      const data = result.data;
+      
+      // Map backend response to frontend interface
+      return {
+        totalCarbon: data.current_total || 0,
+        weeklyCarbon: data.period_total || 0,
+        monthlyCarbon: data.current_total || 0, // Using current_total as fallback
+        dailyAverage: (data.period_total || 0) / 7,
+        trend: data.change_percentage > 0 ? 'increasing' : data.change_percentage < 0 ? 'decreasing' : 'stable',
+        efficiencyScore: data.efficiency_score || 0,
+        lastUpdated: new Date().toISOString(),
+      };
     } catch (error) {
       throw new Error(`Failed to get carbon analytics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

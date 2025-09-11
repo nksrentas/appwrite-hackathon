@@ -55,9 +55,21 @@ class ExternalAPIIntegrations {
   
   private healthMetrics: Map<string, APIHealthMetrics> = new Map();
   private rateLimits: Map<string, { requests: number; resetTime: number; limit: number }> = new Map();
+  
+  private isDevelopmentMode: boolean;
+  private useMockData: boolean;
 
   constructor() {
     this.cache = new CacheService();
+    
+    // Check if we're in development mode with mock API keys
+    this.isDevelopmentMode = process.env.NODE_ENV === 'development';
+    this.useMockData = this.isDevelopmentMode && Boolean(
+      process.env.ELECTRICITY_MAPS_API_KEY?.includes('mock') || 
+      process.env.ELECTRICITY_MAPS_API_KEY?.includes('development') ||
+      process.env.AWS_CARBON_API_KEY?.includes('mock') ||
+      process.env.EPA_EGRID_API_KEY?.includes('mock')
+    );
     
     this.electricityMapsClient = axios.create({
       baseURL: 'https://api.electricitymap.org/v3',
@@ -383,6 +395,12 @@ class ExternalAPIIntegrations {
   }
 
   private async fetchElectricityMapsRaw(zone: string): Promise<ElectricityMapsData | null> {
+    // Return mock data in development mode
+    if (this.useMockData) {
+      logger.info('Using mock Electricity Maps data for development', { metadata: { zone } });
+      return this.generateMockElectricityMapsData(zone);
+    }
+
     const response = await this.electricityMapsClient.get(`/carbon-intensity/latest?zone=${zone}`);
     
     if (!response.data || !response.data.carbonIntensity) {
@@ -396,6 +414,32 @@ class ExternalAPIIntegrations {
       source: response.data.source || 'real_time',
       fossilFreePercentage: response.data.fossilFreePercentage || null,
       renewablePercentage: response.data.renewablePercentage || null
+    };
+  }
+
+  private generateMockElectricityMapsData(zone: string): ElectricityMapsData {
+    // Generate realistic mock data based on zone
+    const zoneData = {
+      'US-CA': { base: 250, renewable: 45 },
+      'DE': { base: 350, renewable: 55 },
+      'FR': { base: 180, renewable: 75 },
+      'AU': { base: 600, renewable: 25 },
+      'NO': { base: 50, renewable: 95 },
+      'default': { base: 400, renewable: 35 }
+    };
+
+    const data = zoneData[zone as keyof typeof zoneData] || zoneData.default;
+    const variation = (Math.random() - 0.5) * 0.2; // ±10% variation
+    const carbonIntensity = Math.round(data.base * (1 + variation));
+    const renewablePercentage = Math.round(data.renewable * (1 + variation * 0.5));
+
+    return {
+      zone,
+      carbonIntensity,
+      timestamp: new Date().toISOString(),
+      source: 'historical',
+      fossilFreePercentage: renewablePercentage,
+      renewablePercentage
     };
   }
 
@@ -430,6 +474,12 @@ class ExternalAPIIntegrations {
   }
 
   private async fetchAWSCarbonRaw(region: string, service: string): Promise<AWSCarbonData | null> {
+    // Return mock data in development mode
+    if (this.useMockData) {
+      logger.info('Using mock AWS Carbon data for development', { metadata: { region, service } });
+      return this.generateMockAWSCarbonData(region, service);
+    }
+
     const response = await this.awsCarbonClient.get(`/carbon-footprint/regions/${region}/services/${service}`);
     
     if (!response.data) {
@@ -443,6 +493,37 @@ class ExternalAPIIntegrations {
       timestamp: response.data.timestamp || new Date().toISOString(),
       unit: response.data.unit || 'g_CO2_per_kWh',
       methodology: response.data.methodology || 'AWS_Carbon_Footprint_Tool'
+    };
+  }
+
+  private generateMockAWSCarbonData(region: string, service: string): AWSCarbonData {
+    const baseIntensities: Record<string, number> = {
+      'us-east-1': 380,
+      'us-west-2': 280,
+      'eu-west-1': 220,
+      'ap-southeast-1': 450,
+      'default': 350
+    };
+
+    const serviceMultipliers: Record<string, number> = {
+      'ec2': 1.0,
+      'lambda': 0.7,
+      's3': 0.3,
+      'rds': 1.2,
+      'default': 1.0
+    };
+
+    const baseIntensity = baseIntensities[region] || baseIntensities.default;
+    const multiplier = serviceMultipliers[service] || serviceMultipliers.default;
+    const variation = (Math.random() - 0.5) * 0.15;
+    
+    return {
+      region,
+      service,
+      carbonIntensity: Math.round(baseIntensity * multiplier * (1 + variation)),
+      timestamp: new Date().toISOString(),
+      unit: 'g_CO2_per_kWh',
+      methodology: 'Mock_Development_Data'
     };
   }
 
@@ -476,6 +557,12 @@ class ExternalAPIIntegrations {
   }
 
   private async fetchGSFCarbonRaw(region: string): Promise<GSFCarbonData | null> {
+    // Return mock data in development mode
+    if (this.useMockData) {
+      logger.info('Using mock GSF Carbon data for development', { metadata: { region } });
+      return this.generateMockGSFCarbonData(region);
+    }
+
     const response = await this.gsfClient.get(`/carbon/regions/${region}`);
     
     if (!response.data) {
@@ -489,6 +576,27 @@ class ExternalAPIIntegrations {
       methodology: response.data.methodology || 'SCI_Specification',
       confidence: response.data.confidence || 'medium',
       source: 'Green_Software_Foundation_API'
+    };
+  }
+
+  private generateMockGSFCarbonData(region: string): GSFCarbonData {
+    const baseIntensities: Record<string, number> = {
+      'US': 400,
+      'EU': 250,
+      'APAC': 520,
+      'default': 380
+    };
+
+    const baseIntensity = baseIntensities[region] || baseIntensities.default;
+    const variation = (Math.random() - 0.5) * 0.2;
+    
+    return {
+      region,
+      carbonIntensity: Math.round(baseIntensity * (1 + variation)),
+      timestamp: new Date().toISOString(),
+      methodology: 'Mock_SCI_Development_Data',
+      confidence: 'medium',
+      source: 'Mock_Development_Environment'
     };
   }
 

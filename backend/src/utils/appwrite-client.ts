@@ -1,4 +1,4 @@
-import { Client, Databases, Functions, Account, Permission, Role } from 'node-appwrite';
+import { Client, Databases, Functions, Account, Permission, Role, Query } from 'node-appwrite';
 
 const requiredEnvVars = [
   'APPWRITE_ENDPOINT',
@@ -139,72 +139,72 @@ export class QueryBuilder {
   private queries: string[] = [];
 
   equal(attribute: string, value: any) {
-    this.queries.push(`equal("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.equal(attribute, value));
     return this;
   }
 
   notEqual(attribute: string, value: any) {
-    this.queries.push(`notEqual("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.notEqual(attribute, value));
     return this;
   }
 
   greaterThan(attribute: string, value: any) {
-    this.queries.push(`greaterThan("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.greaterThan(attribute, value));
     return this;
   }
 
   lessThan(attribute: string, value: any) {
-    this.queries.push(`lessThan("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.lessThan(attribute, value));
     return this;
   }
 
   greaterEqual(attribute: string, value: any) {
-    this.queries.push(`greaterEqual("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.greaterThanEqual(attribute, value));
     return this;
   }
 
   lessEqual(attribute: string, value: any) {
-    this.queries.push(`lessEqual("${attribute}", ${JSON.stringify(value)})`);
+    this.queries.push(Query.lessThanEqual(attribute, value));
     return this;
   }
 
   between(attribute: string, start: any, end: any) {
-    this.queries.push(`between("${attribute}", ${JSON.stringify(start)}, ${JSON.stringify(end)})`);
+    this.queries.push(Query.between(attribute, start, end));
     return this;
   }
 
   isNull(attribute: string) {
-    this.queries.push(`isNull("${attribute}")`);
+    this.queries.push(Query.isNull(attribute));
     return this;
   }
 
   isNotNull(attribute: string) {
-    this.queries.push(`isNotNull("${attribute}")`);
+    this.queries.push(Query.isNotNull(attribute));
     return this;
   }
 
   search(attribute: string, value: string) {
-    this.queries.push(`search("${attribute}", "${value}")`);
+    this.queries.push(Query.search(attribute, value));
     return this;
   }
 
   orderDesc(attribute: string) {
-    this.queries.push(`orderDesc("${attribute}")`);
+    this.queries.push(Query.orderDesc(attribute));
     return this;
   }
 
   orderAsc(attribute: string) {
-    this.queries.push(`orderAsc("${attribute}")`);
+    this.queries.push(Query.orderAsc(attribute));
     return this;
   }
 
   limit(value: number) {
-    this.queries.push(`limit(${value})`);
+    this.queries.push(Query.limit(value));
     return this;
   }
 
   offset(value: number) {
-    this.queries.push(`offset(${value})`);
+    this.queries.push(Query.offset(value));
     return this;
   }
 

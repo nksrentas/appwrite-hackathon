@@ -17,6 +17,7 @@ export interface GitHubAuthResult {
 class AuthService {
   private client: Client;
   private account: Account;
+  private mockMode = true; // Enable mock mode for debugging
 
   constructor() {
     const endpoint = typeof window !== 'undefined' 
@@ -35,6 +36,22 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
+    // In mock mode, check localStorage for user data
+    if (this.mockMode && typeof window !== 'undefined') {
+      try {
+        const storedAuth = localStorage.getItem('ecotrace-auth');
+        if (storedAuth) {
+          const authData = JSON.parse(storedAuth);
+          if (authData.state?.isAuthenticated && authData.state?.user) {
+            return authData.state.user;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to read user from localStorage:', error);
+      }
+      return null;
+    }
+
     try {
       const user = await this.account.get();
       return user as AuthUser;
@@ -146,6 +163,25 @@ class AuthService {
     user: AuthUser | null;
     needsOnboarding: boolean;
   }> {
+    // In mock mode, check localStorage for auth state
+    if (this.mockMode && typeof window !== 'undefined') {
+      try {
+        const storedAuth = localStorage.getItem('ecotrace-auth');
+        if (storedAuth) {
+          const authData = JSON.parse(storedAuth);
+          if (authData.state?.isAuthenticated && authData.state?.user) {
+            return {
+              isAuthenticated: true,
+              user: authData.state.user,
+              needsOnboarding: authData.state.needsOnboarding || false,
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to read auth state from localStorage:', error);
+      }
+    }
+
     try {
       const user = await this.getCurrentUser();
       if (!user) {
