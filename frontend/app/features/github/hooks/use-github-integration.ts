@@ -36,8 +36,7 @@ export function useGitHubIntegration() {
     try {
       await Promise.all([
         loadRepositories(),
-        loadActivities({ refresh: true }),
-        checkIntegrationHealth()
+        loadActivities({ refresh: true })
       ]);
     } catch (error) {
       console.error('Failed to load GitHub integration data:', error);
@@ -47,15 +46,14 @@ export function useGitHubIntegration() {
         variant: 'destructive',
       });
     }
-  }, [isConnected, loadRepositories, loadActivities, checkIntegrationHealth, toast]);
+  }, [isConnected, loadRepositories, loadActivities, toast]);
 
   // Refresh all data
   const refresh = useCallback(async () => {
     try {
       await Promise.all([
         loadRepositories({ refresh: true }),
-        loadActivities({ refresh: true }),
-        checkIntegrationHealth()
+        loadActivities({ refresh: true })
       ]);
       
       toast({
@@ -70,7 +68,7 @@ export function useGitHubIntegration() {
         variant: 'destructive',
       });
     }
-  }, [loadRepositories, loadActivities, checkIntegrationHealth, toast]);
+  }, [loadRepositories, loadActivities, toast]);
 
   // Auto-initialize on mount
   useEffect(() => {

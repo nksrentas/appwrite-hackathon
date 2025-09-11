@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
+import '@shared/types/express'; // Import to extend Request interface
 import { logger } from '@shared/utils/logger';
 import { GitHubIntegrationService } from '../services/integration.service';
 import {
   GitHubWebhookError,
   GitHubIntegrationError,
-  GitHubOAuthError,
-  GitHubAPIError
+  GitHubOAuthError
 } from '../types';
 
 export class GitHubController {
@@ -511,7 +511,9 @@ export class GitHubController {
       logger.githubError('Failed to handle webhook', {
         error: error instanceof Error ? error.message : 'Unknown error',
         repositoryId: req.params.repositoryId,
-        deliveryId: req.headers['x-github-delivery']
+        deliveryId: Array.isArray(req.headers['x-github-delivery']) 
+          ? req.headers['x-github-delivery'][0] 
+          : req.headers['x-github-delivery']
       });
 
       if (error instanceof GitHubWebhookError) {
@@ -539,7 +541,7 @@ export class GitHubController {
    * Health check endpoint for webhooks
    * GET /api/webhooks/github/health
    */
-  async webhookHealthCheck(req: Request, res: Response): Promise<void> {
+  async webhookHealthCheck(_req: Request, res: Response): Promise<void> {
     try {
       res.json({
         success: true,

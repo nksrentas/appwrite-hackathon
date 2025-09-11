@@ -216,26 +216,8 @@ export const useGitHubStore = create<GitHubState>()(
         },
 
         refreshConnection: async () => {
-          try {
-            set({ isConnecting: true, connectionError: null });
-            
-            const connection = await githubService.refreshConnection();
-            
-            set({
-              connection,
-              isConnected: true,
-              isConnecting: false
-            });
-
-            await get().checkIntegrationHealth();
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to refresh connection';
-            set({
-              connectionError: errorMessage,
-              isConnecting: false
-            });
-            throw error;
-          }
+          // Connection refresh is handled automatically by checkConnection
+          await get().checkConnection();
         },
 
         // Repository Management Actions
@@ -245,16 +227,10 @@ export const useGitHubStore = create<GitHubState>()(
               set({ repositoriesLoading: true, repositoriesError: null });
             }
 
-            const result = await githubService.getUserRepositories({
-              page: params.page || 1,
-              perPage: 50,
-              visibility: params.visibility || 'all',
-              sort: 'updated',
-              direction: 'desc'
-            });
+            const repositories = await githubService.getUserRepositories(params.refresh);
 
             set({
-              repositories: result.repositories,
+              repositories,
               repositoriesLoading: false
             });
           } catch (error) {
@@ -269,7 +245,10 @@ export const useGitHubStore = create<GitHubState>()(
 
         enableRepositoryTracking: async (repositoryIds: number[]) => {
           try {
-            await githubService.enableRepositoryTracking(repositoryIds);
+            // Enable tracking for each repository individually
+            for (const repositoryId of repositoryIds) {
+              await githubService.enableRepositoryTracking(repositoryId);
+            }
             
             // Update local state
             const updatedRepositories = get().repositories.map(repo => 
@@ -281,7 +260,7 @@ export const useGitHubStore = create<GitHubState>()(
             set({ repositories: updatedRepositories });
 
             // Refresh connection data
-            await get().checkIntegrationHealth();
+            await get().checkConnection();
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to enable repository tracking';
             set({ repositoriesError: errorMessage });
@@ -291,7 +270,10 @@ export const useGitHubStore = create<GitHubState>()(
 
         disableRepositoryTracking: async (repositoryIds: number[]) => {
           try {
-            await githubService.disableRepositoryTracking(repositoryIds);
+            // Disable tracking for each repository individually
+            for (const repositoryId of repositoryIds) {
+              await githubService.disableRepositoryTracking(repositoryId);
+            }
             
             // Update local state
             const updatedRepositories = get().repositories.map(repo => 
@@ -303,7 +285,7 @@ export const useGitHubStore = create<GitHubState>()(
             set({ repositories: updatedRepositories });
 
             // Refresh connection data
-            await get().checkIntegrationHealth();
+            await get().checkConnection();
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to disable repository tracking';
             set({ repositoriesError: errorMessage });
@@ -343,66 +325,26 @@ export const useGitHubStore = create<GitHubState>()(
 
         // Activity Management Actions
         loadActivities: async (params = {}) => {
-          try {
-            if (params.refresh || get().activities.length === 0) {
-              set({ activitiesLoading: true, activitiesError: null });
-            }
-
-            const activities = await githubService.getActivities({
-              repositoryId: params.repositoryId,
-              type: params.type
-            });
-
-            set({
-              activities,
-              activitiesLoading: false
-            });
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to load activities';
-            set({
-              activitiesError: errorMessage,
-              activitiesLoading: false
-            });
-            throw error;
-          }
+          // Activity tracking will be implemented in future backend updates
+          // For now, just set empty activities to prevent errors
+          set({
+            activities: [],
+            activitiesLoading: false,
+            activitiesError: null
+          });
         },
 
         // Health Monitoring Actions
         checkIntegrationHealth: async () => {
-          try {
-            set({ healthLoading: true });
-            
-            const health = await githubService.getIntegrationHealth();
-            
-            set({
-              integrationHealth: health,
-              healthLoading: false
-            });
-          } catch (error) {
-            console.error('Failed to check integration health:', error);
-            set({ healthLoading: false });
-          }
+          // Health monitoring is included in the status endpoint
+          // This will be populated when we call checkConnection
+          set({ healthLoading: false });
         },
 
         testWebhooks: async () => {
-          try {
-            const results = await githubService.testWebhooks();
-            
-            // Update repository webhook status based on test results
-            const updatedRepositories = get().repositories.map(repo => {
-              const result = results.find(r => r.repositoryId === repo.id);
-              return result 
-                ? { ...repo, webhookStatus: result.status === 'success' ? 'active' as const : 'error' as const }
-                : repo;
-            });
-
-            set({ repositories: updatedRepositories });
-            
-            await get().checkIntegrationHealth();
-          } catch (error) {
-            console.error('Failed to test webhooks:', error);
-            throw error;
-          }
+          // Webhook testing will be implemented in future backend updates
+          // For now, just refresh the repositories to check webhook status
+          await get().loadRepositories({ refresh: true });
         },
 
         // Utility Actions

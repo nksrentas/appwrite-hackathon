@@ -21,9 +21,11 @@ import {
   GITHUB_OAUTH_SCOPES,
   GITHUB_OAUTH_URL
 } from '../types';
+import { GitHubSecurityManager } from './security.service';
 
 export class GitHubOAuthService {
   private config: GitHubOAuthConfig;
+  private securityManager: GitHubSecurityManager;
 
   constructor() {
     this.config = {
@@ -36,6 +38,9 @@ export class GitHubOAuthService {
     if (!this.config.clientId || !this.config.clientSecret || !this.config.redirectUri) {
       throw new Error('GitHub OAuth configuration is incomplete');
     }
+
+    // Initialize security manager for token encryption
+    this.securityManager = new GitHubSecurityManager();
   }
 
   /**
@@ -154,7 +159,12 @@ export class GitHubOAuthService {
 
       // Revoke token with GitHub
       try {
-        await this.revokeGitHubToken(connection.encrypted_access_token);
+        // Decrypt the token before revoking
+        const [encryptedToken, iv, authTag] = connection.encrypted_access_token.split(':');
+        const encryptedTokenData = { encryptedToken, iv, authTag };
+        const decryptedToken = this.securityManager.decryptToken(encryptedTokenData);
+        
+        await this.revokeGitHubToken(decryptedToken);
       } catch (error) {
         // Continue even if GitHub revocation fails
         logger.githubError('Failed to revoke token with GitHub', {
@@ -199,12 +209,17 @@ export class GitHubOAuthService {
         throw new GitHubOAuthError('Connection not found or inactive');
       }
 
+      // Decrypt the token for validation
+      const [encryptedToken, iv, authTag] = connection.encrypted_access_token.split(':');
+      const encryptedTokenData = { encryptedToken, iv, authTag };
+      const decryptedToken = this.securityManager.decryptToken(encryptedTokenData);
+
       // Check if token is still valid
-      const tokenValid = await this.validateToken(connection.encrypted_access_token);
+      const tokenValid = await this.validateToken(decryptedToken);
       if (tokenValid) {
         // Update last used timestamp
         await this.updateLastUsed(connectionId);
-        return connection.encrypted_access_token;
+        return decryptedToken;
       }
 
       // For GitHub, we need to re-authenticate as they don't provide refresh tokens
@@ -363,11 +378,15 @@ export class GitHubOAuthService {
       );
     }, 'findExistingConnection');
 
+    // Encrypt the access token for secure storage
+    const encryptedTokenData = this.securityManager.encryptToken(tokenResponse.access_token);
+    const encryptedToken = `${encryptedTokenData.encryptedToken}:${encryptedTokenData.iv}:${encryptedTokenData.authTag}`;
+
     const connectionData = {
       user_id: userId,
       github_user_id: userInfo.id.toString(),
       github_username: userInfo.login,
-      encrypted_access_token: tokenResponse.access_token, // TODO: Encrypt this
+      encrypted_access_token: encryptedToken,
       token_scopes: tokenResponse.scope || this.config.scopes.join(','),
       last_used_at: new Date().toISOString(),
       is_active: true

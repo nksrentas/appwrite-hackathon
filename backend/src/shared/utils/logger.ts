@@ -165,6 +165,16 @@ class Logger {
     console.log(logMessage);
   }
 
+  system(message: string, context?: LogContext): void {
+    const logMessage = this.formatMessage('SYSTEM', message, context);
+    console.log(logMessage);
+  }
+
+  systemError(message: string, context?: LogContext): void {
+    const logMessage = this.formatMessage('SYSTEM_ERROR', message, context);
+    console.error(logMessage);
+  }
+
   carbonCalculation(
     message: string, 
     calculation: { type: string; confidence: string; carbon_kg: number },

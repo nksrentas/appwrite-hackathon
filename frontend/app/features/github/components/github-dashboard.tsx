@@ -59,11 +59,10 @@ export function GitHubDashboard() {
     if (isConnected) {
       Promise.all([
         loadRepositories(),
-        loadActivities({ refresh: true }),
-        checkIntegrationHealth()
+        loadActivities({ refresh: true })
       ]);
     }
-  }, [isConnected, loadRepositories, loadActivities, checkIntegrationHealth]);
+  }, [isConnected, loadRepositories, loadActivities]);
 
   const trackedRepositories = repositories.filter(repo => repo.trackingEnabled);
   const recentActivities = activities.slice(0, 10);
@@ -72,8 +71,7 @@ export function GitHubDashboard() {
     try {
       await Promise.all([
         loadRepositories({ refresh: true }),
-        loadActivities({ refresh: true }),
-        checkIntegrationHealth()
+        loadActivities({ refresh: true })
       ]);
       toast({
         title: 'Data Refreshed',

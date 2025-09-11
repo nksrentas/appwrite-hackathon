@@ -11,12 +11,24 @@ import { webSocketService } from '@websocket/services/connection';
 import { realtimeBroadcaster } from '@websocket/services/broadcaster';
 import { DashboardService } from '@features/dashboard/services/dashboard-service';
 import { carbonCalculationEngine } from '@features/carbon-calculation';
+// Temporarily disabled GitHub integration
+// import { 
+//   githubRoutes, 
+//   webhookRoutes, 
+//   githubSecurityMiddleware, 
+//   webhookSecurityMiddleware, 
+//   githubErrorHandler,
+//   GitHubIntegrationFeature
+// } from '@features/github-integration';
 import { logger } from '@shared/utils/logger';
 import { performanceMonitor } from '@shared/utils/performance';
 
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
+
+// Initialize GitHub integration feature - temporarily disabled
+// let githubIntegration: GitHubIntegrationFeature | null = null;
 
 app.use(helmet());
 app.use(cors({
@@ -42,6 +54,10 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Mount GitHub integration routes - temporarily disabled
+// app.use('/api/github', githubSecurityMiddleware, githubRoutes);
+// app.use('/api/webhooks', webhookSecurityMiddleware, webhookRoutes);
 
 app.get('/api/dashboard/carbon/:userId', async (req, res) => {
   const startTime = Date.now();
@@ -706,6 +722,23 @@ async function initializeServices(): Promise<void> {
   try {
     webSocketService.initialize(httpServer);
     
+    // Initialize GitHub integration if configuration is available - temporarily disabled
+    // try {
+    //   githubIntegration = new GitHubIntegrationFeature();
+    //   await githubIntegration.initialize();
+    //   logger.info('GitHub integration initialized successfully');
+    // } catch (error: any) {
+    //   logger.warn('GitHub integration initialization failed', {
+    //     error: {
+    //       code: 'GITHUB_INIT_WARNING',
+    //       message: error.message,
+    //       stack: error.stack
+    //     }
+    //   });
+    //   // Don't fail the entire application if GitHub integration fails
+    //   githubIntegration = null;
+    // }
+    
     logger.info('All services initialized successfully');
     
   } catch (error: any) {
@@ -719,6 +752,10 @@ async function initializeServices(): Promise<void> {
     throw error;
   }
 }
+
+// GitHub-specific error handler - temporarily disabled
+// app.use('/api/github', githubErrorHandler);
+// app.use('/api/webhooks', githubErrorHandler);
 
 app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Express error handler', {
@@ -741,8 +778,11 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
   
-  httpServer.close(() => {
+  httpServer.close(async () => {
     webSocketService.shutdown();
+    // if (githubIntegration) {
+    //   await githubIntegration.shutdown();
+    // }
     logger.info('Server closed');
     process.exit(0);
   });
@@ -751,8 +791,11 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully');
   
-  httpServer.close(() => {
+  httpServer.close(async () => {
     webSocketService.shutdown();
+    // if (githubIntegration) {
+    //   await githubIntegration.shutdown();
+    // }
     logger.info('Server closed');
     process.exit(0);
   });
@@ -778,7 +821,7 @@ async function startServer(): Promise<void> {
           'Audit Trail & Version Control',
           'Circuit Breaker Pattern',
           'Conservative Estimation Methodology',
-          'GitHub Integration',
+          // 'GitHub Integration', // temporarily disabled
           'Analytics System',
           'Challenges & Achievements',
           'Authentication System',
@@ -795,6 +838,10 @@ async function startServer(): Promise<void> {
       console.log(`❤️ Service Health: http://localhost:${PORT}/api/calculation/health`);
       console.log(`💾 Health Check: http://localhost:${PORT}/health`);
       console.log(`🔌 WebSocket Status: http://localhost:${PORT}/websocket/status`);
+      // if (githubIntegration && githubIntegration.isReady()) {
+      //   console.log(`🐙 GitHub Integration: http://localhost:${PORT}/api/github`);
+      //   console.log(`🪝 GitHub Webhooks: http://localhost:${PORT}/api/webhooks`);
+      // }
       console.log(`⚡ Feature-based architecture with path aliases`);
     });
     

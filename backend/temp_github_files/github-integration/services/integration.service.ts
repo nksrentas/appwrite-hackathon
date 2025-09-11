@@ -7,7 +7,6 @@ import {
 import { logger } from '@shared/utils/logger';
 import {
   GitHubConnection,
-  GitHubRepository,
   IntegrationStatus,
   OAuthInitiateRequest,
   OAuthInitiateResponse,
@@ -19,8 +18,7 @@ import {
   DisableTrackingRequest,
   GitHubWebhookPayload,
   WebhookProcessingResult,
-  ServiceResponse,
-  GitHubIntegrationError
+  ServiceResponse
 } from '../types';
 import { GitHubOAuthService } from './oauth.service';
 import { GitHubSecurityManager } from './security.service';

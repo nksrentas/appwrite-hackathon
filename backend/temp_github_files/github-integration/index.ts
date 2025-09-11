@@ -26,9 +26,6 @@ export {
 // Types and Interfaces
 export * from './types';
 
-// Database Migration
-export { migration_002_github_integration } from '../../../shared/database/migrations/002_github_integration';
-
 // GitHub Integration Feature Class
 import { GitHubIntegrationService } from './services/integration.service';
 import { GitHubMonitoringService } from './services/monitoring.service';

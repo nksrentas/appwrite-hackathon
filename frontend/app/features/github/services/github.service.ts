@@ -59,29 +59,153 @@ const GitHubRepositorySchema = z.object({
 }).partial().required({ id: true, name: true, fullName: true });
 
 class GitHubService {
+  private readonly isDevelopment = process.env.NODE_ENV === 'development';
+  private readonly mockMode = process.env.GITHUB_MOCK_MODE === 'true';
+
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${API_BASE_URL}/api/v1/integrations/github${endpoint}`;
-    
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      credentials: 'include', // Include cookies for session management
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ 
-        error: 'Unknown error occurred' 
-      }));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    // Return mock data in development mode when mock mode is enabled
+    if (this.mockMode) {
+      return this.getMockData<T>(endpoint, options.method || 'GET');
     }
 
-    return response.json();
+    const url = `${API_BASE_URL}/api/github${endpoint}`;
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        credentials: 'include', // Include cookies for session management
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ 
+          error: 'Unknown error occurred' 
+        }));
+        
+        // Handle the backend's standardized error format
+        if (errorData.success === false && errorData.error) {
+          throw new Error(errorData.error.message || errorData.error.code || 'Unknown error');
+        }
+        
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Handle backend's success/error format
+      if (result.success === false) {
+        throw new Error(result.error?.message || result.error?.code || 'Request failed');
+      }
+      
+      // Return the data from successful responses
+      return result.data || result;
+    } catch (error) {
+      if (this.isDevelopment) {
+        console.error('GitHub API Error:', {
+          endpoint,
+          method: options.method || 'GET',
+          error: error instanceof Error ? error.message : error
+        });
+      }
+      throw error;
+    }
+  }
+
+  private getMockData<T>(endpoint: string, method: string): Promise<T> {
+    // Mock data for development and testing
+    const mockResponses: Record<string, any> = {
+      'GET:/oauth/initiate': {
+        authUrl: 'https://github.com/login/oauth/authorize?client_id=mock&state=mock-state',
+        state: 'mock-state'
+      },
+      'POST:/oauth/callback': {
+        id: 'mock-connection-1',
+        userId: 'user-1',
+        githubUserId: '12345',
+        githubUsername: 'testuser',
+        githubAvatarUrl: 'https://avatars.githubusercontent.com/u/12345',
+        scopes: ['repo', 'user:email'],
+        isActive: true,
+        connectedAt: new Date(),
+        lastSyncAt: new Date(),
+        connectionHealth: 'healthy' as const,
+        totalRepositories: 10,
+        trackedRepositories: 3
+      },
+      'GET:/status': {
+        id: 'mock-connection-1',
+        userId: 'user-1',
+        githubUserId: '12345',
+        githubUsername: 'testuser',
+        githubAvatarUrl: 'https://avatars.githubusercontent.com/u/12345',
+        scopes: ['repo', 'user:email'],
+        isActive: true,
+        connectedAt: new Date(),
+        lastSyncAt: new Date(),
+        connectionHealth: 'healthy' as const,
+        totalRepositories: 10,
+        trackedRepositories: 3
+      },
+      'GET:/repositories': [
+        {
+          id: 1,
+          name: 'awesome-project',
+          fullName: 'testuser/awesome-project',
+          description: 'An awesome React project' as string | null,
+          private: false,
+          language: 'TypeScript',
+          defaultBranch: 'main',
+          stargazersCount: 42,
+          forksCount: 8,
+          size: 1024,
+          lastPushAt: new Date(),
+          isOwner: true,
+          permissions: { admin: true, maintain: true, push: true, triage: true, pull: true },
+          owner: { login: 'testuser', type: 'User' as const, avatarUrl: 'https://avatars.githubusercontent.com/u/12345' },
+          trackingEnabled: true,
+          webhookStatus: 'active' as const,
+          lastActivity: new Date()
+        },
+        {
+          id: 2,
+          name: 'backend-api',
+          fullName: 'testuser/backend-api',
+          description: 'Node.js backend API' as string | null,
+          private: true,
+          language: 'JavaScript',
+          defaultBranch: 'main',
+          stargazersCount: 15,
+          forksCount: 3,
+          size: 2048,
+          lastPushAt: new Date(),
+          isOwner: true,
+          permissions: { admin: true, maintain: true, push: true, triage: true, pull: true },
+          owner: { login: 'testuser', type: 'User' as const, avatarUrl: 'https://avatars.githubusercontent.com/u/12345' },
+          trackingEnabled: false,
+          webhookStatus: null,
+          lastActivity: null
+        }
+      ]
+    };
+
+    const key = `${method}:${endpoint}`;
+    const mockData = mockResponses[key];
+    
+    if (mockData) {
+      // Simulate network delay
+      return new Promise(resolve => {
+        setTimeout(() => resolve(mockData), 500 + Math.random() * 1000);
+      });
+    }
+
+    // Default mock response
+    return Promise.resolve({} as T);
   }
 
   // OAuth Flow Methods
@@ -108,20 +232,12 @@ class GitHubService {
     return GitHubConnectionSchema.parse(response);
   }
 
-  async validateOAuthState(state: string): Promise<GitHubOAuthState | null> {
-    try {
-      const response = await this.makeRequest<GitHubOAuthState>(`/oauth/validate/${state}`);
-      return response;
-    } catch (error) {
-      console.error('Failed to validate OAuth state:', error);
-      return null;
-    }
-  }
+  // OAuth state validation is handled internally by the backend
 
   // Connection Management
   async getConnection(): Promise<GitHubConnection | null> {
     try {
-      const response = await this.makeRequest<GitHubConnection>('/connection');
+      const response = await this.makeRequest<GitHubConnection>('/status');
       return GitHubConnectionSchema.parse(response);
     } catch (error) {
       console.error('Failed to get GitHub connection:', error);
@@ -135,145 +251,42 @@ class GitHubService {
     });
   }
 
-  async refreshConnection(): Promise<GitHubConnection> {
-    const response = await this.makeRequest<GitHubConnection>('/connection/refresh', {
-      method: 'POST'
-    });
-
-    return GitHubConnectionSchema.parse(response);
-  }
+  // Connection refresh is handled automatically by the backend
 
   // Repository Management
-  async getUserRepositories(params?: {
-    page?: number;
-    perPage?: number;
-    visibility?: 'all' | 'public' | 'private';
-    affiliation?: 'owner' | 'collaborator' | 'organization_member';
-    sort?: 'created' | 'updated' | 'pushed' | 'full_name';
-    direction?: 'asc' | 'desc';
-  }): Promise<{
-    repositories: GitHubRepository[];
-    pagination: {
-      page: number;
-      perPage: number;
-      total: number;
-      hasNext: boolean;
-    };
-  }> {
+  async getUserRepositories(refresh?: boolean): Promise<GitHubRepository[]> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.perPage) searchParams.set('per_page', params.perPage.toString());
-    if (params?.visibility) searchParams.set('visibility', params.visibility);
-    if (params?.affiliation) searchParams.set('affiliation', params.affiliation);
-    if (params?.sort) searchParams.set('sort', params.sort);
-    if (params?.direction) searchParams.set('direction', params.direction);
+    if (refresh) searchParams.set('refresh', 'true');
 
-    const response = await this.makeRequest<{
-      repositories: unknown[];
-      pagination: {
-        page: number;
-        perPage: number;
-        total: number;
-        hasNext: boolean;
-      };
-    }>(`/repositories?${searchParams.toString()}`);
+    const response = await this.makeRequest<GitHubRepository[]>(`/repositories?${searchParams.toString()}`);
 
-    return {
-      repositories: response.repositories.map(repo => GitHubRepositorySchema.parse(repo)),
-      pagination: response.pagination
-    };
+    return response.map(repo => GitHubRepositorySchema.parse(repo));
   }
 
-  async enableRepositoryTracking(repositoryIds: number[]): Promise<void> {
-    await this.makeRequest('/repositories/tracking', {
+  async enableRepositoryTracking(repositoryId: number, webhookEvents?: string[]): Promise<void> {
+    await this.makeRequest(`/repositories/${repositoryId}/tracking`, {
       method: 'POST',
-      body: JSON.stringify({ repositoryIds })
+      body: JSON.stringify({ webhookEvents })
     });
   }
 
-  async disableRepositoryTracking(repositoryIds: number[]): Promise<void> {
-    await this.makeRequest('/repositories/tracking', {
-      method: 'DELETE',
-      body: JSON.stringify({ repositoryIds })
+  async disableRepositoryTracking(repositoryId: number): Promise<void> {
+    await this.makeRequest(`/repositories/${repositoryId}/tracking`, {
+      method: 'DELETE'
     });
   }
 
-  async getRepositoryDetails(repositoryId: number): Promise<GitHubRepository> {
-    const response = await this.makeRequest<GitHubRepository>(`/repositories/${repositoryId}`);
-    return GitHubRepositorySchema.parse(response);
-  }
+  // Repository details are included in the main repositories list
 
-  async syncRepository(repositoryId: number): Promise<void> {
-    await this.makeRequest(`/repositories/${repositoryId}/sync`, {
+  async syncRepositories(): Promise<void> {
+    await this.makeRequest('/repositories/sync', {
       method: 'POST'
     });
   }
 
-  // Activity Tracking
-  async getActivities(params?: {
-    repositoryId?: number;
-    type?: string;
-    limit?: number;
-    offset?: number;
-    startDate?: Date;
-    endDate?: Date;
-  }): Promise<GitHubActivity[]> {
-    const searchParams = new URLSearchParams();
-    if (params?.repositoryId) searchParams.set('repository_id', params.repositoryId.toString());
-    if (params?.type) searchParams.set('type', params.type);
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.offset) searchParams.set('offset', params.offset.toString());
-    if (params?.startDate) searchParams.set('start_date', params.startDate.toISOString());
-    if (params?.endDate) searchParams.set('end_date', params.endDate.toISOString());
+  // Activity tracking will be implemented in future backend updates
 
-    const response = await this.makeRequest<GitHubActivity[]>(`/activities?${searchParams.toString()}`);
-    return response;
-  }
-
-  async getRepositoryActivity(
-    repositoryId: number,
-    params?: {
-      limit?: number;
-      offset?: number;
-      type?: string;
-    }
-  ): Promise<GitHubActivity[]> {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.offset) searchParams.set('offset', params.offset.toString());
-    if (params?.type) searchParams.set('type', params.type);
-
-    const response = await this.makeRequest<GitHubActivity[]>(
-      `/repositories/${repositoryId}/activities?${searchParams.toString()}`
-    );
-    return response;
-  }
-
-  // Integration Health & Monitoring
-  async getIntegrationHealth(): Promise<GitHubIntegrationHealth> {
-    const response = await this.makeRequest<GitHubIntegrationHealth>('/health');
-    return response;
-  }
-
-  async getPermissionScopes(): Promise<GitHubPermissionScope[]> {
-    const response = await this.makeRequest<GitHubPermissionScope[]>('/permissions');
-    return response;
-  }
-
-  async testWebhooks(): Promise<{
-    repositoryId: number;
-    status: 'success' | 'error';
-    message: string;
-  }[]> {
-    const response = await this.makeRequest<{
-      repositoryId: number;
-      status: 'success' | 'error';
-      message: string;
-    }[]>('/webhooks/test', {
-      method: 'POST'
-    });
-    return response;
-  }
+  // Integration health monitoring is included in the status endpoint
 
   // Utility Methods
   generateOAuthState(): string {

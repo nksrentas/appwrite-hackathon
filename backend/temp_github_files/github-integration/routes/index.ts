@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { body, param, query, validationResult } from 'express-validator';
 import { GitHubController } from '../controllers/github.controller';
-import { authenticateUser } from '@shared/middleware/auth';
+import { authenticateToken } from '@shared/middleware/auth';
 import { logger } from '@shared/utils/logger';
 
 const router = Router();
@@ -50,11 +50,12 @@ const webhookRateLimit = rateLimit({
 });
 
 // Validation middleware
-const validateRequest = (req: any, res: any, next: any) => {
+const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     logger.githubError('Request validation failed', {
-      errors: errors.array(),
+      error: 'Validation failed: ' + errors.array().map(e => e.msg).join(', '),
+      userId: req.user?.id,
       path: req.path,
       method: req.method
     });
@@ -67,6 +68,7 @@ const validateRequest = (req: any, res: any, next: any) => {
         details: errors.array()
       }
     });
+    return;
   }
   next();
 };
@@ -74,7 +76,7 @@ const validateRequest = (req: any, res: any, next: any) => {
 // Authentication routes (public)
 router.post('/oauth/initiate',
   oauthRateLimit,
-  authenticateUser,
+  authenticateToken,
   async (req, res) => {
     await githubController.initiateOAuth(req, res);
   }
@@ -82,7 +84,7 @@ router.post('/oauth/initiate',
 
 router.post('/oauth/callback',
   oauthRateLimit,
-  authenticateUser,
+  authenticateToken,
   [
     body('code')
       .isString()
@@ -100,7 +102,7 @@ router.post('/oauth/callback',
 );
 
 // Protected routes (require authentication)
-router.use(authenticateUser);
+router.use(authenticateToken);
 
 // Integration management
 router.get('/status',
@@ -338,7 +340,7 @@ export const githubErrorHandler = (error: any, req: any, res: any, next: any) =>
 // Maintenance routes (admin only)
 export const githubMaintenanceRoutes = Router();
 
-githubMaintenanceRoutes.use(authenticateUser);
+githubMaintenanceRoutes.use(authenticateToken);
 // githubMaintenanceRoutes.use(requireAdminRole); // Implement admin role check
 
 githubMaintenanceRoutes.post('/maintenance',

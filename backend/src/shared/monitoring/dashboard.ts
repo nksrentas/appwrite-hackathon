@@ -319,8 +319,10 @@ class MonitoringDashboard {
       logger.warn('Alert generated', {
         level,
         message,
-        component,
-        metadata: { alertGenerated: true }
+        metadata: { 
+          component,
+          alertGenerated: true 
+        }
       });
     }
   }
@@ -339,9 +341,11 @@ class MonitoringDashboard {
     if (alert) {
       alert.resolved = true;
       logger.info('Alert resolved', {
-        alertId,
         message: alert.message,
-        metadata: { alertResolved: true }
+        metadata: { 
+          alertId,
+          alertResolved: true 
+        }
       });
       return true;
     }
@@ -443,13 +447,15 @@ class MonitoringDashboard {
     });
 
     logger.info('Monitoring dashboard routes configured', {
-      routes: [
-        '/api/monitoring/dashboard',
-        '/metrics',
-        '/api/monitoring/alerts/:alertId/resolve',
-        '/api/monitoring/health'
-      ],
-      metadata: { monitoringEnabled: true }
+      metadata: {
+        routes: [
+          '/api/monitoring/dashboard',
+          '/metrics',
+          '/api/monitoring/alerts/:alertId/resolve',
+          '/api/monitoring/health'
+        ],
+        monitoringEnabled: true
+      }
     });
   }
 }

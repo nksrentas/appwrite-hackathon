@@ -7,7 +7,7 @@ import { metricsCollector } from '@shared/monitoring/metrics';
 interface RateLimitConfig {
   windowMs: number;
   max: number;
-  message?: string;
+  message?: string | object;
   standardHeaders?: boolean;
   legacyHeaders?: boolean;
   skipSuccessfulRequests?: boolean;
@@ -41,8 +41,7 @@ class RedisRateLimiter {
       this.redisClient = createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379',
         socket: {
-          connectTimeout: 5000,
-          lazyConnect: true
+          connectTimeout: 5000
         }
       });
 
@@ -72,9 +71,11 @@ class RedisRateLimiter {
       this.createRateLimiters();
 
       logger.info('Rate limiter initialized successfully', {
-        redisConnected: this.isRedisConnected,
-        totalLimiters: this.rateLimiters.size,
-        metadata: { rateLimitingEnabled: true }
+        metadata: { 
+          redisConnected: this.isRedisConnected,
+          totalLimiters: this.rateLimiters.size,
+          rateLimitingEnabled: true 
+        }
       });
 
     } catch (error: any) {
@@ -233,16 +234,6 @@ class RedisRateLimiter {
             retryAfter: Math.ceil(rule.config.windowMs / 1000),
             timestamp: new Date().toISOString()
           });
-        },
-
-        onLimitReached: (req: Request) => {
-          logger.warn('Rate limit threshold reached', {
-            endpoint: req.path,
-            method: req.method,
-            ip: req.ip,
-            limit: rule.config.max,
-            metadata: { rateLimitThreshold: true }
-          });
         }
       });
 
@@ -254,9 +245,11 @@ class RedisRateLimiter {
     });
 
     logger.info('Rate limiters created', {
-      totalRules: rateLimitRules.length,
-      redisEnabled: this.isRedisConnected,
-      metadata: { rateLimitersCreated: true }
+      metadata: { 
+        totalRules: rateLimitRules.length,
+        redisEnabled: this.isRedisConnected,
+        rateLimitersCreated: true 
+      }
     });
   }
 
@@ -277,8 +270,11 @@ class RedisRateLimiter {
           return { totalHits, timeToExpire: timeToExpire > 0 ? timeToExpire : undefined };
         } catch (error: any) {
           logger.error('Redis store incr error', {
-            error: { message: error.message },
-            key
+            error: { 
+              code: 'REDIS_INCR_ERROR',
+              message: error.message 
+            },
+            metadata: { key }
           });
           return { totalHits: 1 };
         }
@@ -289,8 +285,11 @@ class RedisRateLimiter {
           await this.redisClient!.decr(key);
         } catch (error: any) {
           logger.error('Redis store decrement error', {
-            error: { message: error.message },
-            key
+            error: { 
+              code: 'REDIS_DECR_ERROR',
+              message: error.message 
+            },
+            metadata: { key }
           });
         }
       },
@@ -300,8 +299,11 @@ class RedisRateLimiter {
           await this.redisClient!.del(key);
         } catch (error: any) {
           logger.error('Redis store reset error', {
-            error: { message: error.message },
-            key
+            error: { 
+              code: 'REDIS_RESET_ERROR',
+              message: error.message 
+            },
+            metadata: { key }
           });
         }
       }
@@ -335,9 +337,11 @@ class RedisRateLimiter {
       logger.debug('Rate limiter matched', {
         path,
         method,
-        rule: matchedLimiter.description,
-        limit: matchedLimiter.rule.config.max,
-        windowMs: matchedLimiter.rule.config.windowMs
+        metadata: {
+          rule: matchedLimiter.description,
+          limit: matchedLimiter.rule.config.max,
+          windowMs: matchedLimiter.rule.config.windowMs
+        }
       });
       return matchedLimiter.limiter;
     }
