@@ -1,7 +1,12 @@
 import type { MetaFunction } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
-import { ArrowLeft, Database, Eye, Lock, Mail, Shield, UserCheck } from 'lucide-react';
+import { Button } from '@shared/components/ui/button';
+import { Badge } from '@shared/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
+import { Alert, AlertDescription } from '@shared/components/ui/alert';
+import { Separator } from '@shared/components/ui/separator';
+import { ArrowLeft, Database, Eye, Lock, Mail, Shield, UserCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export const meta: MetaFunction = () => {
   return [
@@ -16,15 +21,14 @@ export const meta: MetaFunction = () => {
 export default function Privacy() {
   return (
     <div className="min-h-screen bg-background">
-      <nav className="px-6 py-3 border-b border-border">
+      <nav className="px-6 py-3 border-b border-border bg-background/95 backdrop-blur-supports-[backdrop-filter]:bg-background/95 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto">
-          <Link
-            to="/"
-            className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+          <Button asChild variant="ghost" className="group">
+            <Link to="/" className="inline-flex items-center space-x-2">
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back to Home</span>
+            </Link>
+          </Button>
         </div>
       </nav>
 
@@ -34,6 +38,15 @@ export default function Privacy() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
+            <div className="inline-flex items-center space-x-2 mb-4">
+              <Badge variant="outline" className="text-xs">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                GDPR Compliant
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                Privacy First
+              </Badge>
+            </div>
             <h1 className="text-4xl md:text-5xl font-bold">Privacy Policy</h1>
             <p className="text-xl text-muted-foreground">
               Your privacy is fundamental to our mission
@@ -41,15 +54,14 @@ export default function Privacy() {
             <p className="text-sm text-muted-foreground">Last updated: December 2025</p>
           </div>
 
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">
-                At EcoTrace, we believe in complete transparency about how we collect, use, and
-                protect your data. This policy outlines our commitment to your privacy and data
-                security.
-              </p>
-            </CardContent>
-          </Card>
+          <Alert className="max-w-2xl mx-auto">
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              At EcoTrace, we believe in complete transparency about how we collect, use, and
+              protect your data. This policy outlines our commitment to your privacy and data
+              security.
+            </AlertDescription>
+          </Alert>
 
           <div className="space-y-8">
             <section>

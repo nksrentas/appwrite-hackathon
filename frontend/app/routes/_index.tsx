@@ -2,10 +2,13 @@ import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { useEffect } from 'react';
-import { Github, Leaf, BarChart, Users, Shield, Zap } from 'lucide-react';
+import { Github, Leaf, BarChart, Users, Shield, Zap, CheckCircle2, TrendingUp } from 'lucide-react';
 import { useAuthStore } from '@features/auth/stores/auth.store';
 import { Button } from '@shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/components/ui/card';
+import { Badge } from '@shared/components/ui/badge';
+import { Separator } from '@shared/components/ui/separator';
+import { Alert, AlertDescription } from '@shared/components/ui/alert';
 
 export const meta: MetaFunction = () => {
   return [
@@ -159,18 +162,18 @@ export default function Index() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-center space-x-4 text-body-sm text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <Shield className="h-4 w-4" />
-              <span>Secure OAuth</span>
-            </div>
-            <div className="w-1 h-1 bg-border rounded-full" />
-            <div className="flex items-center space-x-1">
-              <Leaf className="h-4 w-4" />
-              <span>Privacy First</span>
-            </div>
-            <div className="w-1 h-1 bg-border rounded-full" />
-            <span>Free Forever</span>
+          <div className="flex items-center justify-center space-x-4 text-body-sm">
+            <Badge variant="outline" className="text-xs">
+              <Shield className="h-3 w-3 mr-1" />
+              Secure OAuth
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              <Leaf className="h-3 w-3 mr-1" />
+              Privacy First
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              Free Forever
+            </Badge>
           </div>
         </div>
 
@@ -178,14 +181,19 @@ export default function Index() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="bg-card border-border hover:border-primary/50 transition-all duration-200">
+              <Card key={index} className="bg-card border-border hover:border-primary/50 transition-all duration-200 group">
                 <CardHeader>
                   <div className="flex items-start space-x-4">
-                    <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                    <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0 group-hover:bg-primary/20 transition-colors">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{feature.title}</CardTitle>
+                        <Badge variant="outline" className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                          Core
+                        </Badge>
+                      </div>
                       <CardDescription className="text-body-sm leading-relaxed">
                         {feature.description}
                       </CardDescription>
@@ -197,25 +205,59 @@ export default function Index() {
           })}
         </div>
 
-        <div className="mt-20 text-center">
-          <h2 className="text-display-md font-bold mb-12">
-            Join the Sustainable Development Movement
-          </h2>
+        <Separator className="my-16" />
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
-              <div className="text-4xl font-bold text-primary">10k+</div>
-              <div className="text-muted-foreground">Developers Tracking</div>
-            </div>
-            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
-              <div className="text-4xl font-bold text-primary">2.5M</div>
-              <div className="text-muted-foreground">Activities Monitored</div>
-            </div>
-            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
-              <div className="text-4xl font-bold text-primary">150kg</div>
-              <div className="text-muted-foreground">CO₂ Saved This Month</div>
-            </div>
+        <div className="text-center space-y-8">
+          <div className="space-y-4">
+            <Badge variant="outline" className="text-xs">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              Growing Community
+            </Badge>
+            <h2 className="text-display-md font-bold">
+              Join the Sustainable Development Movement
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Be part of a community that's making a real difference in reducing the environmental impact of software development.
+            </p>
           </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <Card className="bg-card border-border hover:border-primary/50 transition-colors">
+              <CardContent className="pt-6 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="text-4xl font-bold text-primary">10k+</div>
+                  <Badge variant="secondary" className="ml-2 text-xs">+12%</Badge>
+                </div>
+                <div className="text-muted-foreground">Developers Tracking</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border hover:border-primary/50 transition-colors">
+              <CardContent className="pt-6 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="text-4xl font-bold text-primary">2.5M</div>
+                  <Badge variant="secondary" className="ml-2 text-xs">+8%</Badge>
+                </div>
+                <div className="text-muted-foreground">Activities Monitored</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border hover:border-primary/50 transition-colors">
+              <CardContent className="pt-6 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="text-4xl font-bold text-primary">150kg</div>
+                  <Badge variant="secondary" className="ml-2 text-xs">+25%</Badge>
+                </div>
+                <div className="text-muted-foreground">CO₂ Saved This Month</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Alert className="max-w-2xl mx-auto text-left">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Join today</strong> and get instant access to your carbon footprint dashboard, 
+              real-time insights, and tools to reduce your environmental impact.
+            </AlertDescription>
+          </Alert>
         </div>
       </main>
 
