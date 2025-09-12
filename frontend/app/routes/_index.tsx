@@ -71,26 +71,26 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-carbon-50 via-primary-50/30 to-scientific-50/20">
-      <nav className="px-4 lg:px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <nav className="px-6 py-3 border-b border-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="bg-primary-500 p-2 rounded-lg carbon-glow">
-              <Leaf className="h-6 w-6 text-white" />
+            <div className="bg-primary p-2 rounded-lg">
+              <Leaf className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-display-md text-carbon-900 font-bold">EcoTrace</span>
+            <span className="text-display-md font-bold">EcoTrace</span>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <Link
               to="/about"
-              className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+              className="text-body-md text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               About
             </Link>
             <Link
               to="/methodology"
-              className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+              className="text-body-md text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               Methodology
             </Link>
@@ -98,31 +98,19 @@ export default function Index() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 lg:px-6 py-12 lg:py-20">
+      <main className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
         <div className="text-center space-y-8 mb-16">
           <div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-carbon-900 tracking-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               Track Your{' '}
-              <span className="text-primary-500 relative">
+              <span className="text-primary">
                 Code's
-                <svg
-                  className="absolute -bottom-2 left-0 right-0 h-3 text-primary-200"
-                  viewBox="0 0 200 12"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M0,8 Q50,2 100,6 T200,4"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                  />
-                </svg>
               </span>{' '}
               Carbon Footprint
             </h1>
           </div>
 
-          <p className="text-body-lg text-carbon-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-body-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Monitor the environmental impact of your development activities in real-time. Connect
             with GitHub, track emissions from commits and CI runs, and join a community committed to
             sustainable software development.
@@ -130,7 +118,7 @@ export default function Index() {
 
           <div>
             {error && (
-              <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg max-w-md mx-auto mb-4">
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg max-w-md mx-auto mb-4">
                 {error}
               </div>
             )}
@@ -139,7 +127,7 @@ export default function Index() {
               onClick={handleSignIn}
               disabled={isLoading}
               size="lg"
-              className="px-8 py-4 text-lg font-medium carbon-shadow"
+              className="px-8 py-4 text-lg font-medium"
             >
               {isLoading ? (
                 <>
@@ -171,30 +159,30 @@ export default function Index() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-center space-x-4 text-body-sm text-carbon-500">
+          <div className="flex items-center justify-center space-x-4 text-body-sm text-muted-foreground">
             <div className="flex items-center space-x-1">
               <Shield className="h-4 w-4" />
               <span>Secure OAuth</span>
             </div>
-            <div className="w-1 h-1 bg-carbon-300 rounded-full" />
+            <div className="w-1 h-1 bg-border rounded-full" />
             <div className="flex items-center space-x-1">
               <Leaf className="h-4 w-4" />
               <span>Privacy First</span>
             </div>
-            <div className="w-1 h-1 bg-carbon-300 rounded-full" />
+            <div className="w-1 h-1 bg-border rounded-full" />
             <span>Free Forever</span>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+              <Card key={index} className="bg-card border-border hover:border-primary/50 transition-all duration-200">
                 <CardHeader>
                   <div className="flex items-start space-x-4">
-                    <div className="bg-primary-100 p-3 rounded-lg flex-shrink-0">
-                      <Icon className="h-6 w-6 text-primary-600" />
+                    <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                      <Icon className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
                       <CardTitle className="text-lg">{feature.title}</CardTitle>
@@ -210,56 +198,56 @@ export default function Index() {
         </div>
 
         <div className="mt-20 text-center">
-          <h2 className="text-display-md text-carbon-900 font-bold mb-12">
+          <h2 className="text-display-md font-bold mb-12">
             Join the Sustainable Development Movement
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="space-y-2">
-              <div className="text-4xl font-bold text-primary-500">10k+</div>
-              <div className="text-carbon-600">Developers Tracking</div>
+            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
+              <div className="text-4xl font-bold text-primary">10k+</div>
+              <div className="text-muted-foreground">Developers Tracking</div>
             </div>
-            <div className="space-y-2">
-              <div className="text-4xl font-bold text-scientific-500">2.5M</div>
-              <div className="text-carbon-600">Activities Monitored</div>
+            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
+              <div className="text-4xl font-bold text-primary">2.5M</div>
+              <div className="text-muted-foreground">Activities Monitored</div>
             </div>
-            <div className="space-y-2">
-              <div className="text-4xl font-bold text-efficiency-500">150kg</div>
-              <div className="text-carbon-600">CO₂ Saved This Month</div>
+            <div className="space-y-2 p-6 rounded-lg bg-card border border-border">
+              <div className="text-4xl font-bold text-primary">150kg</div>
+              <div className="text-muted-foreground">CO₂ Saved This Month</div>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-carbon-200 py-8">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+      <footer className="border-t border-border py-8 mt-20">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-3">
-              <div className="bg-primary-500 p-2 rounded-lg">
-                <Leaf className="h-5 w-5 text-white" />
+              <div className="bg-primary p-2 rounded-lg">
+                <Leaf className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-carbon-900 font-semibold">EcoTrace</span>
+              <span className="font-semibold">EcoTrace</span>
             </div>
 
-            <div className="flex items-center space-x-6 text-body-sm text-carbon-500">
-              <Link to="/privacy" className="hover:text-carbon-700 transition-colors">
+            <div className="flex items-center space-x-6 text-body-sm text-muted-foreground">
+              <Link to="/privacy" className="hover:text-foreground transition-colors duration-200">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="hover:text-carbon-700 transition-colors">
+              <Link to="/terms" className="hover:text-foreground transition-colors duration-200">
                 Terms of Service
               </Link>
               <a
                 href="https://github.com/ecotrace"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-carbon-700 transition-colors"
+                className="hover:text-foreground transition-colors duration-200"
               >
                 Open Source
               </a>
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-carbon-200 text-center text-caption text-carbon-400">
+          <div className="mt-6 pt-6 border-t border-border text-center text-caption text-muted-foreground">
             © 2024 EcoTrace. Building a more sustainable future, one commit at a time.
           </div>
         </div>

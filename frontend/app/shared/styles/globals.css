@@ -137,12 +137,10 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-.carbon-glow {
-  box-shadow: var(--shadow-green);
-}
+/* Removed carbon-glow for cleaner design */
 
 .carbon-shadow {
-  box-shadow: var(--shadow-carbon);
+  box-shadow: var(--shadow);
 }
 
 .text-display-lg {
@@ -183,7 +181,7 @@ body {
   border-radius: var(--radius-lg);
   border-width: 1px;
   border-color: var(--color-border);
-  box-shadow: var(--shadow-carbon);
+  box-shadow: var(--shadow);
 }
 
 .metric-display {
@@ -207,11 +205,12 @@ body {
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: var(--radius-lg);
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.15s ease-in-out;
 }
 
 .activity-item:hover {
-  background-color: color-mix(in srgb, var(--color-muted) 50%, transparent);
+  background-color: color-mix(in srgb, var(--color-muted) 30%, transparent);
+  transition: background-color 0.15s ease-in-out;
 }
 
 .carbon-badge {
@@ -299,25 +298,7 @@ body {
   }
 }
 
-@keyframes pulseGreen {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 70%, transparent);
-  }
-  70% {
-    opacity: 0.9;
-    box-shadow: 0 0 0 10px transparent;
-  }
-}
-
-@keyframes carbonGlow {
-  0% { 
-    box-shadow: 0 0 5px color-mix(in srgb, var(--color-primary) 50%, transparent); 
-  }
-  100% { 
-    box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 80%, transparent); 
-  }
-}
+/* Removed flashy animations for cleaner design */
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
@@ -327,13 +308,7 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
-.animate-pulse-green {
-  animation: pulseGreen 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-carbon-glow {
-  animation: carbonGlow 3s ease-in-out infinite alternate;
-}
+/* Removed flashy pulse animations */
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;

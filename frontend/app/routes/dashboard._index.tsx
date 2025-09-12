@@ -209,8 +209,8 @@ function DashboardContent() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-carbon-900">Authentication Required</h1>
-          <p className="text-carbon-600">Please sign in to access your dashboard.</p>
+          <h1 className="text-2xl font-bold text-foreground">Authentication Required</h1>
+          <p className="text-muted-foreground">Please sign in to access your dashboard.</p>
           <Link to="/">
             <Button>Go to Sign In</Button>
           </Link>
@@ -224,24 +224,24 @@ function DashboardContent() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        duration: 0.6,
+        staggerChildren: 0.05,
+        duration: 0.3,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 10 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5 },
+      transition: { duration: 0.3, ease: 'easeOut' },
     },
   };
 
   return (
     <motion.main
-      className="max-w-7xl mx-auto px-4 lg:px-6 py-8"
+      className="max-w-7xl mx-auto px-6 py-6"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -249,7 +249,7 @@ function DashboardContent() {
       <motion.div className="mb-8" variants={itemVariants}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-display-lg text-carbon-900 font-bold">
+            <h1 className="text-display-lg text-foreground font-bold">
               Good{' '}
               {new Date().getHours() < 12
                 ? 'morning'
@@ -258,7 +258,7 @@ function DashboardContent() {
                   : 'evening'}
               , {user?.name?.split(' ')[0] || 'Developer'}!
             </h1>
-            <p className="text-body-md text-carbon-600 mt-2">
+            <p className="text-body-md text-muted-foreground mt-2">
               Here's your carbon footprint overview for today.
             </p>
           </div>
@@ -362,20 +362,21 @@ function DashboardContent() {
 
         {lastActivity && (
           <motion.div
-            className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6"
-            initial={{ opacity: 0, y: -20 }}
+            className="bg-card border border-border rounded-lg p-4 mb-6"
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
           >
             <div className="flex items-center space-x-3">
-              <div className="bg-primary-500 p-1 rounded-full">
-                <TrendingUp className="h-4 w-4 text-white" />
+              <div className="bg-primary p-1 rounded-full">
+                <TrendingUp className="h-4 w-4 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-body-sm text-primary-800 font-medium">
+                <p className="text-body-sm text-foreground font-medium">
                   New activity detected: {lastActivity.type} in {lastActivity.repository}
                 </p>
-                <p className="text-caption text-primary-600">
+                <p className="text-caption text-muted-foreground">
                   Carbon impact:{' '}
                   {lastActivity.carbonValue
                     ? `${lastActivity.carbonValue}${lastActivity.carbonUnit}`
@@ -438,7 +439,6 @@ function DashboardContent() {
             period="improvement"
             isLoading={isLoading}
             icon={Target}
-            className="carbon-glow"
           />
         </motion.div>
       </motion.div>
@@ -485,10 +485,10 @@ function DashboardContent() {
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-4">
-                <div className="text-4xl font-bold text-primary-500">
+                <div className="text-4xl font-bold text-primary">
                   #{metrics?.leaderboardPosition || '--'}
                 </div>
-                <p className="text-body-sm text-carbon-600">Out of 2,847 developers</p>
+                <p className="text-body-sm text-muted-foreground">Out of 2,847 developers</p>
                 <Badge variant="success" className="w-full justify-center">
                   Top 15% Efficiency
                 </Badge>
@@ -507,20 +507,20 @@ function DashboardContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-body-sm text-carbon-600">Commits</span>
-                <span className="font-medium">42</span>
+                <span className="text-body-sm text-muted-foreground">Commits</span>
+                <span className="font-medium text-foreground">42</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-body-sm text-carbon-600">Pull Requests</span>
-                <span className="font-medium">8</span>
+                <span className="text-body-sm text-muted-foreground">Pull Requests</span>
+                <span className="font-medium text-foreground">8</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-body-sm text-carbon-600">CI Runs</span>
-                <span className="font-medium">156</span>
+                <span className="text-body-sm text-muted-foreground">CI Runs</span>
+                <span className="font-medium text-foreground">156</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-body-sm text-carbon-600">Deployments</span>
-                <span className="font-medium">12</span>
+                <span className="text-body-sm text-muted-foreground">Deployments</span>
+                <span className="font-medium text-foreground">12</span>
               </div>
             </CardContent>
           </Card>

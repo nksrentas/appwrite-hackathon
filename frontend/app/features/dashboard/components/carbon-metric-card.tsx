@@ -60,12 +60,12 @@ export const CarbonMetricCard = ({
   const getTrendColor = () => {
     switch (trend) {
       case 'up':
-        return 'text-danger';
+        return 'text-destructive';
       case 'down':
-        return 'text-primary-500';
+        return 'text-primary';
       case 'stable':
       default:
-        return 'text-carbon-500';
+        return 'text-muted-foreground';
     }
   };
 
@@ -114,25 +114,25 @@ export const CarbonMetricCard = ({
             aria-label="Real-time updates enabled"
           >
             <motion.div
-              className="h-2 w-2 bg-primary-500 rounded-full"
-              animate={!prefersReducedMotion ? { scale: [1, 1.2, 1] } : {}}
+              className="h-2 w-2 bg-primary rounded-full"
+              animate={!prefersReducedMotion ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={!prefersReducedMotion ? { repeat: Infinity, duration: 2 } : {}}
               aria-hidden="true"
             />
-            <span className="text-caption text-carbon-500">Live</span>
+            <span className="text-caption text-muted-foreground">Live</span>
           </motion.div>
         )}
 
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-body-sm font-medium text-carbon-600">{title}</CardTitle>
-          <Icon className="h-4 w-4 text-carbon-400" />
+          <CardTitle className="text-body-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
 
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-baseline space-x-2">
               <motion.div
-                className="metric-display text-carbon-900"
+                className="metric-display text-foreground"
                 key={value}
                 initial={{ opacity: 0.7, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -152,12 +152,12 @@ export const CarbonMetricCard = ({
                     {Math.abs(trendValue).toFixed(1)}%
                   </span>
                 </div>
-                <span className="text-body-sm text-carbon-500">{period}</span>
+                <span className="text-body-sm text-muted-foreground">{period}</span>
               </div>
             )}
 
             {lastUpdated && (
-              <div className="flex items-center space-x-1 text-caption text-carbon-400">
+              <div className="flex items-center space-x-1 text-caption text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 <span>Updated {new Date(lastUpdated).toLocaleTimeString()}</span>
               </div>
@@ -166,11 +166,11 @@ export const CarbonMetricCard = ({
             {value > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
-                  <Zap className="h-3 w-3 text-efficiency-500" />
-                  <span className="text-caption text-carbon-500">Efficiency Score</span>
+                  <Zap className="h-3 w-3 text-primary" />
+                  <span className="text-caption text-muted-foreground">Efficiency Score</span>
                 </div>
                 <motion.div
-                  className="text-body-sm font-medium text-efficiency-600"
+                  className="text-body-sm font-medium text-primary"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -182,23 +182,7 @@ export const CarbonMetricCard = ({
           </div>
         </CardContent>
 
-        {intensity === 'high' && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-danger/5 to-transparent pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.5, 0] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          />
-        )}
-
-        {intensity === 'low' && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-primary-500/5 to-transparent pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.3, 0] }}
-            transition={{ repeat: Infinity, duration: 4 }}
-          />
-        )}
+        {/* Removed flashy overlays for cleaner design */}
       </Card>
     </motion.div>
   );
