@@ -237,7 +237,7 @@ export default function Index() {
                 Terms of Service
               </Link>
               <a
-                href="https://github.com/ecotrace"
+                href="https://github.com/nksrentas/appwrite-hackathon"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-foreground transition-colors duration-200"
