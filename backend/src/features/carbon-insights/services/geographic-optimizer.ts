@@ -6,7 +6,7 @@ import {
   CarbonIntensityForecast,
   TimeOfDayFactor,
   DataCenter
-} from '../types';
+} from '@features/carbon-insights/types';
 import { externalAPIService } from '@features/carbon-calculation';
 import { CacheService } from '@shared/utils/cache';
 
@@ -27,17 +27,12 @@ export class GeographicOptimizerService {
     return GeographicOptimizerService.instance;
   }
 
-  /**
-   * Get current geographic context for a user
-   */
   async getGeographicContext(userId: string): Promise<GeographicContext> {
     try {
       logger.info('Getting geographic context', { userId });
 
-      // Get user location (placeholder - should come from user profile)
       const userLocation = await this.getUserLocation(userId);
 
-      // Get current grid data
       const [gridData, forecast, nearbyDataCenters] = await Promise.all([
         this.getCurrentGridData(userLocation),
         this.getGridForecast(userLocation, 24),
@@ -69,23 +64,17 @@ export class GeographicOptimizerService {
     }
   }
 
-  /**
-   * Generate location-specific insights
-   */
   async generateLocationInsights(userId: string): Promise<CarbonInsight[]> {
     try {
       const context = await this.getGeographicContext(userId);
       const insights: CarbonInsight[] = [];
 
-      // Generate timing recommendations based on grid forecast
       const timingInsights = await this.generateTimingRecommendations(context, userId);
       insights.push(...timingInsights);
 
-      // Generate location optimization recommendations
       const locationInsights = await this.generateLocationRecommendations(context, userId);
       insights.push(...locationInsights);
 
-      // Generate data center optimization recommendations
       const dataCenterInsights = await this.generateDataCenterInsights(context, userId);
       insights.push(...dataCenterInsights);
 
@@ -103,25 +92,21 @@ export class GeographicOptimizerService {
     }
   }
 
-  /**
-   * Generate timing recommendations based on grid carbon intensity
-   */
   private async generateTimingRecommendations(
     context: GeographicContext, 
     userId: string
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Find low-carbon windows in the next 24 hours
     const lowCarbonWindows = context.forecast24h
       .filter(f => f.intensity < context.currentCarbonIntensity * 0.8)
       .sort((a, b) => a.intensity - b.intensity)
-      .slice(0, 3); // Top 3 opportunities
+      .slice(0, 3);
 
     for (const window of lowCarbonWindows) {
       const reductionPotential = this.calculateTimingReduction(context, window);
       
-      if (reductionPotential > 0.05) { // Minimum 50g CO2e reduction
+      if (reductionPotential > 0.05) {
         insights.push({
           id: `timing-geo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           userId,
@@ -169,21 +154,17 @@ export class GeographicOptimizerService {
     return insights;
   }
 
-  /**
-   * Generate location optimization recommendations
-   */
   private async generateLocationRecommendations(
     context: GeographicContext,
     userId: string
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Check if user is in a high-carbon region
-    if (context.currentCarbonIntensity > 400) { // Above 400 gCO2/kWh
+    if (context.currentCarbonIntensity > 400) {
       const nearbyRegions = await this.findLowerCarbonRegions(context.currentLocation);
       
-      for (const region of nearbyRegions.slice(0, 2)) { // Top 2 alternatives
-        if (region.distance < 100 && region.carbonReduction > 20) { // Within 100km and >20% reduction
+      for (const region of nearbyRegions.slice(0, 2)) {
+        if (region.distance < 100 && region.carbonReduction > 20) {
           insights.push({
             id: `location-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             userId,
@@ -205,7 +186,7 @@ export class GeographicOptimizerService {
             status: 'generated',
             createdAt: new Date(),
             updatedAt: new Date(),
-            validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Valid for 7 days
+            validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             tags: ['location', 'remote-work', region.gridRegion],
             metadata: {
               algorithm: 'location-optimizer-v1',
@@ -223,7 +204,6 @@ export class GeographicOptimizerService {
       }
     }
 
-    // Seasonal recommendations
     const seasonalInsight = await this.generateSeasonalRecommendation(context, userId);
     if (seasonalInsight) {
       insights.push(seasonalInsight);
@@ -232,25 +212,21 @@ export class GeographicOptimizerService {
     return insights;
   }
 
-  /**
-   * Generate data center optimization insights
-   */
   private async generateDataCenterInsights(
     context: GeographicContext,
     userId: string
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Find the most carbon-efficient data center for cloud workloads
     const optimalDataCenter = context.nearbyDataCenters
       .sort((a, b) => (a.renewablePercentage / a.pue) - (b.renewablePercentage / b.pue))
-      .find(dc => dc.latency < 100); // Within acceptable latency
+      .find(dc => dc.latency < 100);
 
     if (optimalDataCenter && optimalDataCenter.renewablePercentage > 50) {
-      const currentDataCenter = context.nearbyDataCenters[0]; // Assume first is current
+      const currentDataCenter = context.nearbyDataCenters[0];
       const improvement = this.calculateDataCenterImprovement(currentDataCenter, optimalDataCenter);
 
-      if (improvement.carbonReduction > 15) { // >15% improvement
+      if (improvement.carbonReduction > 15) {
         insights.push({
           id: `datacenter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           userId,
@@ -272,7 +248,7 @@ export class GeographicOptimizerService {
           status: 'generated',
           createdAt: new Date(),
           updatedAt: new Date(),
-          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Valid for 30 days
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           tags: ['infrastructure', 'data-center', 'cloud'],
           metadata: {
             algorithm: 'datacenter-optimizer-v1',
@@ -292,11 +268,7 @@ export class GeographicOptimizerService {
     return insights;
   }
 
-  /**
-   * Helper methods
-   */
   private async getUserLocation(userId: string): Promise<GeoLocation> {
-    // TODO: Get from user profile service
     return {
       latitude: 37.7749,
       longitude: -122.4194,
@@ -309,19 +281,17 @@ export class GeographicOptimizerService {
 
   private async getCurrentGridData(location: GeoLocation): Promise<any> {
     try {
-      // Try to get real data from external API
       const cacheKey = `grid-data:${location.latitude}:${location.longitude}`;
       const cached = await this.cache.get(cacheKey);
       if (cached) return cached;
 
-      // Mock data structure for now
       const gridData = {
-        carbonIntensity: 250 + Math.random() * 200, // 250-450 gCO2/kWh
-        renewablePercentage: 30 + Math.random() * 40, // 30-70%
+        carbonIntensity: 250 + Math.random() * 200,
+        renewablePercentage: 30 + Math.random() * 40,
         timestamp: new Date()
       };
 
-      await this.cache.set(cacheKey, gridData, { ttl: 300000 }); // Cache for 5 minutes
+      await this.cache.set(cacheKey, gridData, { ttl: 300000 });
       return gridData;
     } catch (error) {
       logger.error('Failed to get grid data', { error: error.message });
@@ -337,19 +307,17 @@ export class GeographicOptimizerService {
       const timestamp = new Date(Date.now() + i * 60 * 60 * 1000);
       const hour = timestamp.getHours();
       
-      // Simulate daily pattern: lower at night and midday (solar), higher during peak hours
       let intensity = baseIntensity;
-      if (hour >= 2 && hour <= 6) intensity *= 0.7; // Night - low demand
-      if (hour >= 11 && hour <= 15) intensity *= 0.8; // Midday - solar
-      if (hour >= 18 && hour <= 21) intensity *= 1.3; // Evening peak
+      if (hour >= 2 && hour <= 6) intensity *= 0.7;
+      if (hour >= 11 && hour <= 15) intensity *= 0.8;
+      if (hour >= 18 && hour <= 21) intensity *= 1.3;
       
-      // Add some randomness
       intensity *= (0.9 + Math.random() * 0.2);
 
       forecast.push({
         timestamp,
         intensity: Math.round(intensity),
-        confidence: 0.8 - Math.abs(i - 12) * 0.01, // Higher confidence for nearer times
+        confidence: 0.8 - Math.abs(i - 12) * 0.01,
         renewablePercentage: 40 + Math.sin((hour - 12) * Math.PI / 12) * 20
       });
     }
@@ -358,7 +326,6 @@ export class GeographicOptimizerService {
   }
 
   private async getGridRegion(location: GeoLocation): Promise<string> {
-    // Simple mapping - in reality would use proper grid region mapping
     if (location.country === 'US') {
       if (location.region === 'CA') return 'CAISO';
       if (['NY', 'NJ', 'PA'].includes(location.region || '')) return 'PJM';
@@ -368,7 +335,6 @@ export class GeographicOptimizerService {
   }
 
   private async getNearbyDataCenters(location: GeoLocation): Promise<DataCenter[]> {
-    // Mock data centers for the SF Bay Area
     return [
       {
         name: 'AWS US-West-1',
@@ -404,14 +370,12 @@ export class GeographicOptimizerService {
       let factor = 1.0;
       let renewableAvailability = 0.3;
 
-      // Solar availability pattern
       if (hour >= 6 && hour <= 18) {
         renewableAvailability = 0.4 + 0.3 * Math.sin((hour - 6) * Math.PI / 12);
       }
 
-      // Demand pattern affects carbon intensity
-      if (hour >= 2 && hour <= 6) factor = 0.8; // Low demand
-      if (hour >= 18 && hour <= 21) factor = 1.3; // Peak demand
+      if (hour >= 2 && hour <= 6) factor = 0.8;
+      if (hour >= 18 && hour <= 21) factor = 1.3;
 
       factors.push({
         hour,
@@ -430,14 +394,11 @@ export class GeographicOptimizerService {
       let factor = 1.0;
       let renewableAvailability = 0.4;
 
-      // Northern hemisphere patterns
       if (location.latitude > 0) {
-        // Summer: more solar, less heating
         if (month >= 5 && month <= 8) {
           factor = 0.9;
           renewableAvailability = 0.6;
         }
-        // Winter: less solar, more heating
         if (month >= 11 || month <= 2) {
           factor = 1.2;
           renewableAvailability = 0.3;
@@ -481,9 +442,8 @@ export class GeographicOptimizerService {
     const futureIntensity = window.intensity;
     const reductionRatio = (currentIntensity - futureIntensity) / currentIntensity;
     
-    // Assume 1 kWh average consumption for development tasks
-    const averageConsumption = 1; // kWh
-    const reductionKg = (reductionRatio * averageConsumption * currentIntensity) / 1000; // Convert gCO2 to kgCO2
+    const averageConsumption = 1;
+    const reductionKg = (reductionRatio * averageConsumption * currentIntensity) / 1000;
     
     return Math.max(0, reductionKg);
   }
@@ -518,7 +478,6 @@ export class GeographicOptimizerService {
   }
 
   private async findLowerCarbonRegions(currentLocation: GeoLocation): Promise<any[]> {
-    // Mock nearby regions with lower carbon intensity
     return [
       {
         name: 'Berkeley, CA',
@@ -544,8 +503,7 @@ export class GeographicOptimizerService {
     const newIntensity = region.carbonIntensity;
     const reductionRatio = (currentIntensity - newIntensity) / currentIntensity;
     
-    // Estimate daily development consumption
-    const dailyConsumption = 8; // kWh for 8 hours of development
+    const dailyConsumption = 8;
     const dailyReduction = (reductionRatio * dailyConsumption * currentIntensity) / 1000;
     
     return Math.max(0, dailyReduction);
@@ -633,10 +591,9 @@ export class GeographicOptimizerService {
     const optimalEfficiency = optimal.renewablePercentage / optimal.pue;
     const carbonReduction = ((optimalEfficiency - currentEfficiency) / currentEfficiency) * 100;
     
-    // Estimate absolute reduction for typical cloud workload
-    const monthlyCloudUsage = 100; // kWh
-    const currentEmissions = monthlyCloudUsage * (100 - current.renewablePercentage) / 100 * 0.5; // kg CO2e
-    const optimalEmissions = monthlyCloudUsage * (100 - optimal.renewablePercentage) / 100 * 0.5; // kg CO2e
+    const monthlyCloudUsage = 100;
+    const currentEmissions = monthlyCloudUsage * (100 - current.renewablePercentage) / 100 * 0.5;
+    const optimalEmissions = monthlyCloudUsage * (100 - optimal.renewablePercentage) / 100 * 0.5;
     const absoluteReduction = Math.max(0, currentEmissions - optimalEmissions);
 
     return {

@@ -1,8 +1,7 @@
 import { logger } from '@shared/utils/logger';
-import { CarbonInsight, ImpactMeasurement, GeographicContext } from '../types';
+import { CarbonInsight, ImpactMeasurement, GeographicContext } from '@features/carbon-insights/types';
 
 export interface CarbonInsightsWebSocketEvents {
-  // Insight-related events
   'insights:generated': {
     userId: string;
     insights: CarbonInsight[];
@@ -29,7 +28,6 @@ export interface CarbonInsightsWebSocketEvents {
     timestamp: string;
   };
 
-  // Impact tracking events
   'impact:measured': {
     userId: string;
     insightId: string;
@@ -48,7 +46,6 @@ export interface CarbonInsightsWebSocketEvents {
     timestamp: string;
   };
 
-  // Geographic context events
   'geographic:context_updated': {
     userId: string;
     context: GeographicContext;
@@ -63,7 +60,6 @@ export interface CarbonInsightsWebSocketEvents {
     timestamp: string;
   };
 
-  // Pattern analysis events
   'patterns:analyzed': {
     userId: string;
     summary: {
@@ -74,7 +70,6 @@ export interface CarbonInsightsWebSocketEvents {
     timestamp: string;
   };
 
-  // ML model events
   'model:recommendation_generated': {
     userId: string;
     insightId: string;
@@ -91,7 +86,6 @@ export interface CarbonInsightsWebSocketEvents {
     timestamp: string;
   };
 
-  // Achievement events
   'achievements:unlocked': {
     userId: string;
     achievement: {
@@ -116,7 +110,7 @@ export interface CarbonInsightsWebSocketEvents {
 
 export class CarbonInsightsWebSocketService {
   private static instance: CarbonInsightsWebSocketService;
-  private broadcaster: any; // Will be injected from main WebSocket service
+  private broadcaster: any;
 
   private constructor() {}
 
@@ -131,9 +125,6 @@ export class CarbonInsightsWebSocketService {
     this.broadcaster = broadcaster;
   }
 
-  /**
-   * Emit insight generation event
-   */
   async emitInsightsGenerated(userId: string, insights: CarbonInsight[]): Promise<void> {
     try {
       const event: CarbonInsightsWebSocketEvents['insights:generated'] = {
@@ -156,9 +147,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit insight implementation started event
-   */
   async emitImplementationStarted(userId: string, insightId: string): Promise<void> {
     try {
       const event: CarbonInsightsWebSocketEvents['insights:implementation_started'] = {
@@ -179,9 +167,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit insight implementation completed event
-   */
   async emitImplementationCompleted(
     userId: string, 
     insightId: string, 
@@ -211,9 +196,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit impact measured event
-   */
   async emitImpactMeasured(
     userId: string, 
     insightId: string, 
@@ -243,9 +225,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit geographic context update event
-   */
   async emitGeographicContextUpdate(userId: string, context: GeographicContext): Promise<void> {
     try {
       const event: CarbonInsightsWebSocketEvents['geographic:context_updated'] = {
@@ -268,9 +247,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit grid carbon intensity alert
-   */
   async emitGridAlert(
     userId: string,
     alertType: 'low_carbon' | 'high_carbon' | 'renewable_peak',
@@ -301,9 +277,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit patterns analyzed event
-   */
   async emitPatternsAnalyzed(
     userId: string,
     summary: {
@@ -333,9 +306,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit ML recommendation generated event
-   */
   async emitMLRecommendationGenerated(
     userId: string,
     insightId: string,
@@ -368,9 +338,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit achievement unlocked event
-   */
   async emitAchievementUnlocked(
     userId: string,
     achievement: {
@@ -403,9 +370,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit milestone reached event
-   */
   async emitMilestoneReached(
     userId: string,
     milestone: {
@@ -436,9 +400,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit impact report generated event
-   */
   async emitImpactReportGenerated(
     userId: string,
     reportId: string,
@@ -471,9 +432,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Emit model feedback received event
-   */
   async emitModelFeedbackReceived(
     userId: string,
     insightId: string,
@@ -505,9 +463,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Private method to emit events through the broadcaster
-   */
   private async emit(channel: string, event: string, data: any): Promise<void> {
     if (!this.broadcaster) {
       logger.warn('WebSocket broadcaster not initialized, skipping event emission', {
@@ -529,9 +484,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Subscribe to carbon insights events for a user
-   */
   async subscribeToInsights(userId: string, socketId: string): Promise<void> {
     try {
       if (!this.broadcaster) {
@@ -551,9 +503,6 @@ export class CarbonInsightsWebSocketService {
     }
   }
 
-  /**
-   * Unsubscribe from carbon insights events
-   */
   async unsubscribeFromInsights(userId: string, socketId: string): Promise<void> {
     try {
       if (!this.broadcaster) {

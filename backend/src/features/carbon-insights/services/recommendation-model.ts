@@ -5,13 +5,9 @@ import {
   DevelopmentPattern,
   GeographicContext,
   TrainingExample
-} from '../types';
+} from '@features/carbon-insights/types';
 import { CacheService } from '@shared/utils/cache';
 
-/**
- * Machine learning recommendation service for carbon insights
- * This is a simplified implementation - in production would use actual ML frameworks
- */
 export class RecommendationModelService {
   private static instance: RecommendationModelService;
   private cache: CacheService;
@@ -31,9 +27,6 @@ export class RecommendationModelService {
     return RecommendationModelService.instance;
   }
 
-  /**
-   * Predict carbon insights based on user profile and patterns
-   */
   async predict(
     userProfile: UserProfile,
     patterns: DevelopmentPattern,
@@ -42,13 +35,10 @@ export class RecommendationModelService {
     try {
       logger.info('Generating ML-based recommendations', { userId: userProfile.userId });
 
-      // Create feature vector from input data
       const features = this.createFeatureVector(userProfile, patterns, context);
       
-      // Run prediction model
       const predictions = this.runPredictionModel(features);
       
-      // Convert predictions to insights
       const insights = this.convertPredictionsToInsights(predictions, userProfile);
       
       logger.info('ML recommendations generated', { 
@@ -66,9 +56,6 @@ export class RecommendationModelService {
     }
   }
 
-  /**
-   * Train the model with new examples (simplified implementation)
-   */
   async train(trainingData: TrainingExample[]): Promise<void> {
     if (this.isTraining) {
       logger.warn('Model training already in progress');
@@ -79,13 +66,11 @@ export class RecommendationModelService {
       this.isTraining = true;
       logger.info('Starting model training', { count: trainingData.length });
 
-      // Simple gradient descent-like weight adjustment
       for (const example of trainingData) {
         const prediction = this.runPredictionModel(example.features);
-        const error = example.label - prediction[0]; // Simplified single output
+        const error = example.label - prediction[0];
         
-        // Update weights based on error
-        this.updateWeights(example.features, error, 0.01); // Learning rate: 0.01
+        this.updateWeights(example.features, error, 0.01);
       }
 
       logger.info('Model training completed');
@@ -96,9 +81,6 @@ export class RecommendationModelService {
     }
   }
 
-  /**
-   * Update model based on implementation feedback
-   */
   async updateFromFeedback(
     userId: string,
     insightId: string,
@@ -111,7 +93,6 @@ export class RecommendationModelService {
         insightId 
       });
 
-      // Store feedback for next training cycle
       const feedbackKey = `feedback:${insightId}`;
       await this.cache.set(feedbackKey, {
         userId,
@@ -119,9 +100,8 @@ export class RecommendationModelService {
         implemented,
         effectiveness,
         timestamp: new Date()
-      }, { ttl: 86400 * 30 }); // Keep for 30 days
+      }, { ttl: 86400 * 30 });
 
-      // Immediate model adjustment for successful implementations
       if (implemented && effectiveness > 0.7) {
         this.reinforceSuccessfulPattern(insightId, effectiveness);
       }
@@ -131,14 +111,11 @@ export class RecommendationModelService {
     }
   }
 
-  /**
-   * Get model performance metrics
-   */
   async getModelMetrics(): Promise<any> {
     return {
       version: '1.0.0',
       lastTraining: new Date(),
-      totalExamples: 1000, // Mock
+      totalExamples: 1000,
       accuracy: 0.78,
       precision: 0.81,
       recall: 0.74,
@@ -148,11 +125,7 @@ export class RecommendationModelService {
     };
   }
 
-  /**
-   * Private methods
-   */
   private initializeWeights(): void {
-    // Initialize feature weights (simplified feature set)
     const initialWeights = {
       'build_frequency': 0.3,
       'carbon_intensity': 0.25,
@@ -178,41 +151,31 @@ export class RecommendationModelService {
   ): number[] {
     const features: number[] = [];
 
-    // Build frequency (normalized to 0-1)
     features.push(Math.min(patterns.buildFrequency.averageBuildsPerDay / 30, 1));
 
-    // Grid carbon intensity (normalized)
     features.push(Math.min(context.currentCarbonIntensity / 800, 1));
 
-    // Experience level (ordinal encoding)
     const experienceMap = { 'junior': 0.25, 'mid': 0.5, 'senior': 0.75, 'lead': 1.0 };
     features.push(experienceMap[profile.experienceLevel] || 0.5);
 
-    // Team size (normalized)
     features.push(Math.min(profile.teamSize / 20, 1));
 
-    // Renewable energy percentage
     features.push(context.renewableEnergyPercentage / 100);
 
-    // Complexity preference
     const complexityMap = { 'simple': 0.33, 'moderate': 0.66, 'advanced': 1.0 };
     features.push(complexityMap[profile.preferences.complexityPreference] || 0.66);
 
-    // Sustainability goals (average of targets normalized)
     const sustainabilityScore = profile.sustainabilityGoals ? 
       profile.sustainabilityGoals.monthlyReductionTarget / 20 : 0.5;
     features.push(Math.min(sustainabilityScore, 1));
 
-    // Tool efficiency (average across primary tools)
     const avgToolEfficiency = patterns.toolUsage.primaryTools.length > 0 ?
       patterns.toolUsage.primaryTools.reduce((sum, tool) => sum + tool.efficiencyScore, 0) / 
       patterns.toolUsage.primaryTools.length : 0.5;
     features.push(avgToolEfficiency);
 
-    // Working hours consistency
     features.push(patterns.peakHours.consistencyScore);
 
-    // Geographic flexibility (based on pattern variety)
     const geoFlexibility = patterns.geographicPatterns.length > 1 ? 0.8 : 0.3;
     features.push(geoFlexibility);
 
@@ -220,7 +183,6 @@ export class RecommendationModelService {
   }
 
   private runPredictionModel(features: number[]): number[] {
-    // Simplified linear model: weighted sum of features
     let prediction = 0;
     const featureNames = Array.from(this.modelWeights.keys());
 
@@ -229,16 +191,14 @@ export class RecommendationModelService {
       prediction += features[i] * weight;
     }
 
-    // Apply sigmoid activation to get 0-1 probability
     const probability = 1 / (1 + Math.exp(-prediction));
 
-    // Return multiple predictions for different insight types
     return [
-      probability, // Timing optimization
-      probability * 0.8, // Geographic optimization  
-      probability * 0.9, // Tooling optimization
-      probability * 0.7, // Workflow optimization
-      probability * 0.6  // Infrastructure optimization
+      probability,
+      probability * 0.8,
+      probability * 0.9,
+      probability * 0.7,
+      probability * 0.6
     ];
   }
 
@@ -247,7 +207,7 @@ export class RecommendationModelService {
     profile: UserProfile
   ): CarbonInsight[] {
     const insights: CarbonInsight[] = [];
-    const threshold = 0.6; // Minimum confidence threshold
+    const threshold = 0.6;
 
     const insightTemplates = [
       {
@@ -297,7 +257,7 @@ export class RecommendationModelService {
           type: template.type,
           title: template.title,
           description: template.description,
-          expectedReduction: template.expectedReduction * predictions[i], // Scale by confidence
+          expectedReduction: template.expectedReduction * predictions[i];
           implementationComplexity: template.complexity,
           estimatedTimeToImplement: this.estimateImplementationTime(template.complexity, predictions[i]),
           prerequisites: this.generatePrerequisites(template.type),
@@ -341,10 +301,8 @@ export class RecommendationModelService {
   }
 
   private reinforceSuccessfulPattern(insightId: string, effectiveness: number): void {
-    // Simple reinforcement learning - increase weights for successful patterns
-    const reinforcementFactor = effectiveness * 0.1; // Small adjustment
+    const reinforcementFactor = effectiveness * 0.1;
     
-    // Increase all weights slightly for successful outcomes
     for (const [feature, weight] of this.modelWeights) {
       this.modelWeights.set(feature, weight + reinforcementFactor);
     }
@@ -357,7 +315,7 @@ export class RecommendationModelService {
     confidence: number
   ): number {
     const baseTime = { 'low': 1, 'medium': 3, 'high': 8 };
-    return baseTime[complexity] * (2 - confidence); // Higher confidence = less time needed
+    return baseTime[complexity] * (2 - confidence);
   }
 
   private generatePrerequisites(type: string): string[] {
@@ -419,12 +377,10 @@ export class RecommendationModelService {
     const importance: Record<string, number> = {};
     let totalWeight = 0;
 
-    // Calculate total weight
     for (const weight of this.modelWeights.values()) {
       totalWeight += Math.abs(weight);
     }
 
-    // Normalize to get importance percentages
     for (const [feature, weight] of this.modelWeights) {
       importance[feature] = Math.abs(weight) / totalWeight;
     }

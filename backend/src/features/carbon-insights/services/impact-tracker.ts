@@ -9,9 +9,9 @@ import {
   ImplementationStatus,
   ProductivityImpact,
   UserSatisfaction
-} from '../types';
+} from '@features/carbon-insights/types';
 import { CacheService } from '@shared/utils/cache';
-import { PatternAnalyzerService } from './pattern-analyzer';
+import { PatternAnalyzerService } from '@features/carbon-insights/services/pattern-analyzer';
 
 export class ImpactTrackerService {
   private static instance: ImpactTrackerService;
@@ -30,20 +30,14 @@ export class ImpactTrackerService {
     return ImpactTrackerService.instance;
   }
 
-  /**
-   * Track implementation of a carbon insight
-   */
   async trackImplementation(userId: string, insightId: string): Promise<void> {
     try {
       logger.info('Starting impact tracking', { userId, insightId });
 
-      // Establish baseline before implementation
       const baseline = await this.establishBaseline(userId, insightId);
       
-      // Schedule impact measurement after implementation period
       const implementationPeriod = this.getImplementationPeriod(insightId);
       
-      // In a production system, this would be handled by a job scheduler
       setTimeout(async () => {
         try {
           const impact = await this.measureImpact(userId, insightId, baseline);
@@ -65,9 +59,6 @@ export class ImpactTrackerService {
     }
   }
 
-  /**
-   * Record implementation status update
-   */
   async recordImplementationStatus(
     userId: string,
     insightId: string,
@@ -88,7 +79,6 @@ export class ImpactTrackerService {
 
       logger.info('Implementation status recorded', { userId, insightId });
 
-      // If implementation is completed, start measuring impact
       if (status === 'implemented') {
         await this.trackImplementation(userId, insightId);
       }
@@ -99,9 +89,6 @@ export class ImpactTrackerService {
     }
   }
 
-  /**
-   * Get impact measurement for a specific insight
-   */
   async getImpactMeasurement(insightId: string): Promise<ImpactMeasurement | null> {
     try {
       const impactKey = `impact:${insightId}`;
@@ -112,9 +99,6 @@ export class ImpactTrackerService {
     }
   }
 
-  /**
-   * Generate comprehensive impact report for user
-   */
   async generateImpactReport(userId: string, days: number = 30): Promise<ImpactReport> {
     try {
       logger.info('Generating impact report', { userId, days });
@@ -125,10 +109,8 @@ export class ImpactTrackerService {
         totalDays: days
       };
 
-      // Get all impact measurements for the period
       const impactMeasurements = await this.getImpactMeasurementsForPeriod(userId, reportPeriod);
       
-      // Calculate aggregate metrics
       const totalCarbonReduction = impactMeasurements.reduce(
         (sum, impact) => sum + impact.actualReduction, 0
       );
@@ -138,13 +120,10 @@ export class ImpactTrackerService {
           sum + impact.productivityImpact.overallChange, 0
         ) / impactMeasurements.length : 0;
 
-      // Identify top insights
       const topInsights = await this.identifyTopInsights(impactMeasurements);
       
-      // Analyze trends
       const trends = await this.analyzeTrends(userId, reportPeriod);
       
-      // Generate future recommendations
       const recommendations = await this.generateFutureRecommendations(userId, impactMeasurements);
 
       const report: ImpactReport = {
@@ -179,9 +158,6 @@ export class ImpactTrackerService {
     }
   }
 
-  /**
-   * Collect user feedback on insight effectiveness
-   */
   async collectUserFeedback(
     userId: string,
     insightId: string,
@@ -203,7 +179,6 @@ export class ImpactTrackerService {
         insightId
       });
 
-      // Update the impact measurement with user feedback
       await this.updateImpactWithFeedback(insightId, satisfaction);
 
     } catch (error) {
@@ -212,12 +187,8 @@ export class ImpactTrackerService {
     }
   }
 
-  /**
-   * Private methods
-   */
   private async establishBaseline(userId: string, insightId: string): Promise<Baseline> {
-    // Get recent activity data for baseline
-    const activities = await this.getRecentActivities(userId, 14); // 2 weeks baseline
+    const activities = await this.getRecentActivities(userId, 14);
     
     if (activities.length === 0) {
       throw new Error('Insufficient activity data for baseline establishment');
@@ -247,9 +218,8 @@ export class ImpactTrackerService {
       createdAt: new Date()
     };
 
-    // Store baseline
     const baselineKey = `baseline:${insightId}`;
-    await this.cache.set(baselineKey, baseline, { ttl: 86400 * 60 }); // Keep for 60 days
+    await this.cache.set(baselineKey, baseline, { ttl: 86400 * 60 });
 
     logger.info('Baseline established', { 
       userId, 
@@ -264,24 +234,19 @@ export class ImpactTrackerService {
     insightId: string,
     baseline: Baseline
   ): Promise<ImpactMeasurement> {
-    // Get post-implementation activity data
-    const postActivities = await this.getRecentActivities(userId, 14); // 2 weeks post-implementation
+    const postActivities = await this.getRecentActivities(userId, 14);
     
     if (postActivities.length === 0) {
       throw new Error('Insufficient post-implementation data for impact measurement');
     }
 
-    // Calculate actual carbon reduction
     const postAverageCarbon = postActivities.reduce((sum, a) => sum + a.carbonFootprint, 0) / postActivities.length;
     const actualReduction = Math.max(0, baseline.averageCarbon - postAverageCarbon);
 
-    // Measure productivity impact
     const productivityImpact = await this.measureProductivityImpact(baseline, postActivities);
 
-    // Get user feedback if available
     const userSatisfaction = await this.getUserSatisfaction(userId, insightId);
 
-    // Determine implementation status
     const implementationStatus = this.determineImplementationStatus(
       actualReduction, 
       baseline.expectedReduction
@@ -310,7 +275,7 @@ export class ImpactTrackerService {
         ),
         confoundingFactors: ['seasonal-variation', 'workload-changes'],
         dataQuality: {
-          completeness: Math.min(postActivities.length / (14 * 5), 1), // Expected 5 activities per day
+          completeness: Math.min(postActivities.length / (14 * 5), 1),
           consistency: 0.8,
           recency: 1.0,
           overallScore: 0.85
@@ -324,37 +289,29 @@ export class ImpactTrackerService {
 
   private async recordImpact(impact: ImpactMeasurement): Promise<void> {
     const impactKey = `impact:${impact.insightId}`;
-    await this.cache.set(impactKey, impact, { ttl: 86400 * 90 }); // Keep for 90 days
+    await this.cache.set(impactKey, impact, { ttl: 86400 * 90 });
     
-    // Also store in user's impact history
     const historyKey = `impact-history:${impact.userId}`;
     const history = (await this.cache.get(historyKey)) || [];
     history.push(impact);
-    await this.cache.set(historyKey, history, { ttl: 86400 * 365 }); // Keep for 1 year
+    await this.cache.set(historyKey, history, { ttl: 86400 * 365 });
   }
 
   private async updateRecommendationModel(impact: ImpactMeasurement): Promise<void> {
-    // This would integrate with the ML model to provide feedback
-    // For now, just log the update
     logger.info('Updating recommendation model with impact data', {
       insightId: impact.insightId
     });
   }
 
   private getImplementationPeriod(insightId: string): number {
-    // Return implementation period in milliseconds
-    // For demo, return 1 minute (in production would be days/weeks)
-    return 60 * 1000; // 1 minute
+    return 60 * 1000;
   }
 
   private async getRecentActivities(userId: string, days: number): Promise<Activity[]> {
-    // This would integrate with the activity tracking system
-    // For now, return mock data
     return this.patternAnalyzer['getRecentActivities'](userId, days);
   }
 
   private calculateAverageProductivity(activities: Activity[]): number {
-    // Simple productivity calculation based on successful activities
     if (activities.length === 0) return 0;
     
     const successfulActivities = activities.filter(a => 
@@ -367,7 +324,7 @@ export class ImpactTrackerService {
   private analyzeBaselinePatterns(activities: Activity[]): any[] {
     return activities.map(activity => ({
       activityType: activity.type,
-      frequency: 1, // Simplified
+      frequency: 1,
       averageDuration: activity.duration,
       averageCarbonFootprint: activity.carbonFootprint,
       consistency: 0.8
@@ -378,7 +335,7 @@ export class ImpactTrackerService {
     // Get expected reduction from cached insight
     const insightKey = `insight:${insightId}`;
     const insight = await this.cache.get(insightKey);
-    return insight?.expectedReduction || 0.1; // Default 100g CO2e
+    return insight?.expectedReduction || 0.1;
   }
 
   private async measureProductivityImpact(
@@ -393,10 +350,10 @@ export class ImpactTrackerService {
     return {
       overallChange,
       buildTimeChange: this.calculateBuildTimeChange(postActivities),
-      debugTimeChange: 0, // Placeholder
-      codeQualityChange: 0, // Placeholder
-      teamCollaborationChange: 0, // Placeholder
-      developerSatisfactionChange: 0, // Placeholder
+      debugTimeChange: 0,
+      codeQualityChange: 0,
+      teamCollaborationChange: 0,
+      developerSatisfactionChange: 0,
       metrics: [
         {
           name: 'Build Success Rate',
@@ -415,8 +372,7 @@ export class ImpactTrackerService {
     if (buildActivities.length === 0) return 0;
     
     const avgBuildTime = buildActivities.reduce((sum, a) => sum + a.duration, 0) / buildActivities.length;
-    // Compare with assumed baseline (simplified)
-    const baselineBuildTime = 300; // 5 minutes
+    const baselineBuildTime = 300;
     
     return ((baselineBuildTime - avgBuildTime) / baselineBuildTime) * 100;
   }
@@ -461,23 +417,20 @@ export class ImpactTrackerService {
   }
 
   private calculateMeasurementConfidence(baseline: Baseline, postActivities: Activity[]): number {
-    // Simple confidence calculation based on data quality and consistency
-    const dataQualityScore = Math.min(postActivities.length / 14, 1); // Expect 1 activity per day
-    const consistencyScore = 0.8; // Simplified
+    const dataQualityScore = Math.min(postActivities.length / 14, 1);
+    const consistencyScore = 0.8;
     
     return (dataQualityScore + consistencyScore) / 2;
   }
 
   private calculateStatisticalSignificance(baseline: Baseline, postActivities: Activity[]): number {
-    // Simplified p-value calculation - in reality would use proper statistical tests
     const sampleSize = postActivities.length;
     const effectSize = Math.abs(baseline.averageCarbon - 
       (postActivities.reduce((sum, a) => sum + a.carbonFootprint, 0) / postActivities.length));
     
-    // Mock significance based on effect size and sample size
-    if (effectSize > 0.5 && sampleSize > 10) return 0.01; // Highly significant
-    if (effectSize > 0.2 && sampleSize > 7) return 0.05; // Significant
-    return 0.15; // Not significant
+    if (effectSize > 0.5 && sampleSize > 10) return 0.01;
+    if (effectSize > 0.2 && sampleSize > 7) return 0.05;
+    return 0.15;
   }
 
   private async updateImpactWithFeedback(insightId: string, satisfaction: UserSatisfaction): Promise<void> {
@@ -505,7 +458,7 @@ export class ImpactTrackerService {
       .slice(0, 5)
       .map(impact => ({
         insightId: impact.insightId,
-        title: `Insight ${impact.insightId}`, // Would get actual title
+        title: `Insight ${impact.insightId}`,
         carbonReduction: impact.actualReduction,
         productivityImpact: impact.productivityImpact.overallChange,
         implementationEffort: impact.timeToImplement,
@@ -515,12 +468,11 @@ export class ImpactTrackerService {
   }
 
   private async analyzeTrends(userId: string, period: any): Promise<any[]> {
-    // Simplified trend analysis
     return [
       {
         metric: 'Carbon Reduction',
         direction: 'improving' as const,
-        rate: 15, // 15% per month
+        rate: 15,
         confidence: 0.8,
         projectedNextMonth: 2.5
       },
@@ -563,9 +515,9 @@ export class ImpactTrackerService {
   ): Promise<any> {
     return {
       totalCarbonSaved: totalReduction,
-      equivalentTrees: Math.round(totalReduction * 50), // Rough conversion
-      equivalentCars: Math.round(totalReduction / 4), // Cars off road for a day
-      monetaryValue: totalReduction * 50, // USD equivalent at $50/ton
+      equivalentTrees: Math.round(totalReduction * 50),
+      equivalentCars: Math.round(totalReduction / 4),
+      monetaryValue: totalReduction * 50,
       rank: {
         percentile: 75,
         category: 'intermediate' as const,

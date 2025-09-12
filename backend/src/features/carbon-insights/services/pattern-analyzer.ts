@@ -9,7 +9,7 @@ import {
   GeographicPattern,
   WorkingHabitPattern,
   CollaborationPattern
-} from '../types';
+} from '@features/carbon-insights/types';
 import { CacheService } from '@shared/utils/cache';
 
 export class PatternAnalyzerService {
@@ -27,14 +27,10 @@ export class PatternAnalyzerService {
     return PatternAnalyzerService.instance;
   }
 
-  /**
-   * Analyze user patterns over the specified timeframe
-   */
   async analyzeUserPatterns(userId: string, days: number = 30): Promise<DevelopmentPattern> {
     try {
       logger.info('Analyzing user patterns', { userId, days });
 
-      // Check cache first
       const cacheKey = `patterns:${userId}:${days}d`;
       const cachedPattern = await this.cache.get(cacheKey);
       if (cachedPattern) {
@@ -42,7 +38,6 @@ export class PatternAnalyzerService {
         return cachedPattern;
       }
 
-      // Get activity data
       const activities = await this.getRecentActivities(userId, days);
       
       if (activities.length === 0) {
@@ -50,7 +45,6 @@ export class PatternAnalyzerService {
         return this.getDefaultPattern(userId);
       }
 
-      // Analyze different aspects of user behavior
       const [
         buildFrequency,
         peakHours,
@@ -87,7 +81,6 @@ export class PatternAnalyzerService {
         lastAnalyzed: new Date()
       };
 
-      // Cache for 2 hours
       await this.cache.set(cacheKey, pattern, { ttl: 7200 });
 
       logger.info('Pattern analysis completed', { 
@@ -102,9 +95,6 @@ export class PatternAnalyzerService {
     }
   }
 
-  /**
-   * Calculate build frequency patterns
-   */
   private async calculateBuildFrequency(activities: Activity[]): Promise<BuildFrequencyPattern> {
     const buildActivities = activities.filter(a => a.type === 'build');
     
@@ -112,21 +102,17 @@ export class PatternAnalyzerService {
       return this.getDefaultBuildFrequency();
     }
 
-    // Group builds by day
     const buildsByDay = this.groupActivitiesByDay(buildActivities);
     const dailyCounts = Object.values(buildsByDay).map(builds => builds.length);
     
-    // Calculate statistics
     const averageBuildsPerDay = dailyCounts.reduce((sum, count) => sum + count, 0) / dailyCounts.length;
     const buildDurations = buildActivities.map(b => b.duration);
     
-    // Identify peak build days
     const maxBuilds = Math.max(...dailyCounts);
     const peakBuildDays = Object.entries(buildsByDay)
       .filter(([_, builds]) => builds.length >= maxBuilds * 0.8)
       .map(([day, _]) => this.getDayOfWeek(new Date(day)));
 
-    // Analyze build types and success rates
     const buildTypeDistribution = this.analyzeBuildTypes(buildActivities);
     const failureRate = this.calculateFailureRate(buildActivities);
     const retryPatterns = this.analyzeRetryPatterns(buildActivities);
@@ -147,15 +133,11 @@ export class PatternAnalyzerService {
     };
   }
 
-  /**
-   * Identify peak working hours
-   */
   private async identifyPeakWorkingHours(activities: Activity[]): Promise<PeakHoursPattern> {
     if (activities.length === 0) {
       return this.getDefaultPeakHours();
     }
 
-    // Group activities by hour
     const activityByHour = new Map<number, Activity[]>();
     
     for (const activity of activities) {
@@ -166,7 +148,6 @@ export class PatternAnalyzerService {
       activityByHour.get(hour)!.push(activity);
     }
 
-    // Calculate intensity and carbon efficiency for each hour
     const hourRanges = Array.from(activityByHour.entries()).map(([hour, hourActivities]) => {
       const intensity = hourActivities.length / activities.length;
       const avgCarbonFootprint = hourActivities.reduce((sum, a) => sum + a.carbonFootprint, 0) / hourActivities.length;
@@ -179,37 +160,29 @@ export class PatternAnalyzerService {
       };
     });
 
-    // Identify primary working hours (top 8 hours with highest intensity)
     const primaryWorkingHours = hourRanges
       .sort((a, b) => b.intensity - a.intensity)
       .slice(0, 8);
 
-    // Analyze day-of-week patterns
     const weekdayPattern = this.analyzeWeekdayPatterns(activities);
 
-    // Calculate consistency score
     const consistencyScore = this.calculateWorkingHoursConsistency(activities);
 
     return {
       primaryWorkingHours,
-      timezone: 'UTC', // TODO: Get from user profile
+      timezone: 'UTC',
       weekdayPattern,
-      seasonalVariation: false, // TODO: Implement seasonal analysis
+      seasonalVariation: false,
       consistencyScore
     };
   }
 
-  /**
-   * Analyze tool usage patterns
-   */
   private async analyzeToolUsage(activities: Activity[]): Promise<ToolUsagePattern> {
-    // Extract tool usage from activity metadata
     const toolUsageMap = new Map<string, { hours: number; carbonFootprint: number }>();
     const languageUsage = new Map<string, number>();
     const frameworkUsage = new Map<string, number>();
 
     for (const activity of activities) {
-      // Process tools used
       if (activity.metadata.toolsUsed) {
         for (const tool of activity.metadata.toolsUsed) {
           if (!toolUsageMap.has(tool)) {
@@ -221,7 +194,6 @@ export class PatternAnalyzerService {
         }
       }
 
-      // Process languages used
       if (activity.metadata.languagesUsed) {
         for (const language of activity.metadata.languagesUsed) {
           languageUsage.set(language, (languageUsage.get(language) || 0) + activity.duration);
@@ -229,7 +201,6 @@ export class PatternAnalyzerService {
       }
     }
 
-    // Convert to primary tools with efficiency scores
     const primaryTools = Array.from(toolUsageMap.entries()).map(([toolName, usage]) => ({
       toolName,
       usageHours: usage.hours,
@@ -238,7 +209,6 @@ export class PatternAnalyzerService {
       alternatives: this.getToolAlternatives(toolName)
     })).sort((a, b) => b.usageHours - a.usageHours);
 
-    // Convert language and framework usage to distributions
     const totalActivityTime = activities.reduce((sum, a) => sum + a.duration, 0);
     const languageDistribution = Object.fromEntries(
       Array.from(languageUsage.entries()).map(([lang, time]) => [lang, time / totalActivityTime])
@@ -248,10 +218,8 @@ export class PatternAnalyzerService {
       Array.from(frameworkUsage.entries()).map(([fw, time]) => [fw, time / totalActivityTime])
     );
 
-    // Analyze CI/CD patterns
     const cicdPatterns = this.analyzeCICDPatterns(activities);
 
-    // Calculate local vs remote ratio
     const localVsRemoteRatio = this.calculateLocalVsRemoteRatio(activities);
 
     return {
@@ -264,11 +232,7 @@ export class PatternAnalyzerService {
     };
   }
 
-  /**
-   * Analyze location patterns
-   */
   private async analyzeLocationPatterns(activities: Activity[]): Promise<GeographicPattern[]> {
-    // Group activities by location
     const locationGroups = new Map<string, Activity[]>();
     
     for (const activity of activities) {
@@ -279,7 +243,6 @@ export class PatternAnalyzerService {
       locationGroups.get(locationKey)!.push(activity);
     }
 
-    // Analyze each location
     const patterns: GeographicPattern[] = [];
     
     for (const [locationKey, locationActivities] of locationGroups) {
@@ -291,7 +254,7 @@ export class PatternAnalyzerService {
         location,
         timeSpent,
         carbonIntensityDuringWork: carbonIntensity,
-        travelPatterns: [], // TODO: Implement travel pattern detection
+        travelPatterns: [],
         remoteWorkEfficiency: this.calculateRemoteWorkEfficiency(locationActivities)
       });
     }
@@ -299,17 +262,12 @@ export class PatternAnalyzerService {
     return patterns.sort((a, b) => b.timeSpent - a.timeSpent);
   }
 
-  /**
-   * Identify high carbon activities and patterns
-   */
   private identifyHighCarbonActivities(activities: Activity[]): HighCarbonPattern[] {
-    // Define threshold for high carbon activities (top 20%)
     const carbonFootprints = activities.map(a => a.carbonFootprint).sort((a, b) => b - a);
     const threshold = carbonFootprints[Math.floor(carbonFootprints.length * 0.2)];
     
     const highCarbonActivities = activities.filter(a => a.carbonFootprint >= threshold);
     
-    // Group similar patterns
     const patternGroups = this.groupSimilarPatterns(highCarbonActivities);
     
     return patternGroups.map(group => ({
@@ -333,23 +291,15 @@ export class PatternAnalyzerService {
     }));
   }
 
-  /**
-   * Analyze working habits patterns
-   */
   private async analyzeWorkingHabits(activities: Activity[]): Promise<WorkingHabitPattern> {
-    // Identify focus time patterns
     const focusTimePatterns = this.identifyFocusTimePatterns(activities);
     
-    // Calculate interruption frequency
     const interruptionFrequency = this.calculateInterruptionFrequency(activities);
     
-    // Calculate multitasking ratio
     const multitaskingRatio = this.calculateMultitaskingRatio(activities);
     
-    // Identify deep work sessions
     const deepWorkSessions = this.identifyDeepWorkSessions(activities);
     
-    // Analyze energy levels throughout the day
     const energyLevels = this.analyzeEnergyLevels(activities);
 
     return {
@@ -361,40 +311,31 @@ export class PatternAnalyzerService {
     };
   }
 
-  /**
-   * Analyze collaboration patterns
-   */
   private async analyzeCollaborationPatterns(activities: Activity[]): Promise<CollaborationPattern> {
     const meetingActivities = activities.filter(a => a.type === 'meeting');
     const meetingFrequency = meetingActivities.length / 30; // per day over 30 days
     const averageMeetingDuration = meetingActivities.reduce((sum, a) => sum + a.duration, 0) / meetingActivities.length || 0;
 
-    // Calculate collaboration metrics
     const collaborativeActivities = activities.filter(a => a.metadata.collaborators && a.metadata.collaborators.length > 0);
     const pairProgrammingHours = collaborativeActivities
       .filter(a => a.type === 'code')
-      .reduce((sum, a) => sum + a.duration, 0) / 60; // Convert to hours per week
+      .reduce((sum, a) => sum + a.duration, 0) / 60;
 
     return {
       meetingFrequency,
       averageMeetingDuration,
-      remoteVsInPersonRatio: 0.8, // TODO: Detect from activity metadata
-      pairProgrammingHours: pairProgrammingHours / 4, // Per week
-      asyncCommunicationRatio: 0.6, // TODO: Calculate from activity patterns
+      remoteVsInPersonRatio: 0.8,
+      pairProgrammingHours: pairProgrammingHours / 4,
+      asyncCommunicationRatio: 0.6,
       teamSizePreference: this.calculateAverageTeamSize(activities)
     };
   }
 
-  /**
-   * Helper methods
-   */
   private async getRecentActivities(userId: string, days: number): Promise<Activity[]> {
-    // TODO: Integrate with actual activity data store
-    // For now, return mock data
     const mockActivities: Activity[] = [];
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     
-    for (let i = 0; i < days * 10; i++) { // 10 activities per day
+    for (let i = 0; i < days * 10; i++) {
       const timestamp = new Date(startDate.getTime() + Math.random() * days * 24 * 60 * 60 * 1000);
       
       mockActivities.push({
@@ -402,8 +343,8 @@ export class PatternAnalyzerService {
         userId,
         type: ['build', 'test', 'code', 'meeting'][Math.floor(Math.random() * 4)] as any,
         timestamp,
-        duration: 30 + Math.random() * 120, // 30-150 minutes
-        carbonFootprint: Math.random() * 2, // 0-2 kg CO2e
+        duration: 30 + Math.random() * 120,
+        carbonFootprint: Math.random() * 2,
         location: {
           latitude: 37.7749 + (Math.random() - 0.5) * 0.1,
           longitude: -122.4194 + (Math.random() - 0.5) * 0.1,
@@ -485,7 +426,7 @@ export class PatternAnalyzerService {
       averageBuildsPerDay: 5,
       peakBuildDays: ['Tuesday', 'Wednesday', 'Thursday'],
       buildDurationDistribution: {
-        mean: 300, // 5 minutes
+        mean: 300,
         median: 180,
         p95: 600,
         p99: 1200,
@@ -516,13 +457,12 @@ export class PatternAnalyzerService {
     };
   }
 
-  // Additional helper methods would go here...
   private assessDataQuality(activities: Activity[], expectedDays: number): any {
-    const completeness = Math.min(activities.length / (expectedDays * 10), 1); // Expect 10 activities per day
+    const completeness = Math.min(activities.length / (expectedDays * 10), 1);
     return {
       completeness,
-      consistency: 0.8, // TODO: Implement consistency calculation
-      recency: 1.0, // Data is fresh
+      consistency: 0.8,
+      recency: 1.0,
       overallScore: completeness * 0.8 + 0.8 * 0.1 + 1.0 * 0.1
     };
   }
@@ -560,7 +500,6 @@ export class PatternAnalyzerService {
     return Math.sqrt(variance);
   }
 
-  // Placeholder implementations for complex analysis methods
   private analyzeBuildTypes(activities: Activity[]): Record<string, number> {
     return { 'CI': 0.7, 'Local': 0.2, 'Deploy': 0.1 };
   }
@@ -577,17 +516,16 @@ export class PatternAnalyzerService {
   }
 
   private analyzeWeekdayPatterns(activities: Activity[]): any[] {
-    return []; // Simplified for now
+    return [];
   }
 
   private calculateWorkingHoursConsistency(activities: Activity[]): number {
-    return 0.75; // Simplified consistency score
+    return 0.75;
   }
 
   private calculateToolEfficiencyScore(toolName: string, usage: any): number {
-    // Simple efficiency calculation based on carbon per hour
     const avgCarbonPerHour = usage.carbonFootprint / usage.hours;
-    return Math.max(0, 1 - avgCarbonPerHour / 2); // Normalize to 0-1 scale
+    return Math.max(0, 1 - avgCarbonPerHour / 2);
   }
 
   private getToolAlternatives(toolName: string): any[] {
@@ -620,16 +558,14 @@ export class PatternAnalyzerService {
   }
 
   private calculateLocalVsRemoteRatio(activities: Activity[]): number {
-    // Simple calculation based on activity metadata
-    return 0.7; // 70% local development
+    return 0.7;
   }
 
   private calculateRemoteWorkEfficiency(activities: Activity[]): number {
-    return 0.8; // 80% efficiency score
+    return 0.8;
   }
 
   private groupSimilarPatterns(activities: Activity[]): any[] {
-    // Group activities by type and characteristics
     const groups = new Map();
     
     for (const activity of activities) {
@@ -647,7 +583,7 @@ export class PatternAnalyzerService {
       averageDuration: groupActivities.reduce((sum: number, a: Activity) => sum + a.duration, 0) / groupActivities.length,
       complexity: Math.min(10, Math.max(1, Math.floor(groupActivities.length / 2))),
       averageCarbon: groupActivities.reduce((sum: number, a: Activity) => sum + a.carbonFootprint, 0) / groupActivities.length,
-      frequency: groupActivities.length / 7, // per week
+      frequency: groupActivities.length / 7,
       timeOfDay: groupActivities.map((a: Activity) => a.timestamp.getHours()),
       dayOfWeek: groupActivities.map((a: Activity) => this.getDayOfWeek(a.timestamp)),
       gridCarbonIntensity: 0.4,
@@ -675,17 +611,16 @@ export class PatternAnalyzerService {
     ];
   }
 
-  // Additional simplified implementations
   private identifyFocusTimePatterns(activities: Activity[]): any[] {
     return [];
   }
 
   private calculateInterruptionFrequency(activities: Activity[]): number {
-    return 2.3; // interruptions per hour
+    return 2.3;
   }
 
   private calculateMultitaskingRatio(activities: Activity[]): number {
-    return 0.3; // 30% of time spent multitasking
+    return 0.3;
   }
 
   private identifyDeepWorkSessions(activities: Activity[]): any[] {

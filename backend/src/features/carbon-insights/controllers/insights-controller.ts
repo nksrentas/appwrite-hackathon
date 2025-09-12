@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { logger } from '@shared/utils/logger';
-import { InsightEngineService } from '../services/insight-engine';
-import { ImpactTrackerService } from '../services/impact-tracker';
-import { PatternAnalyzerService } from '../services/pattern-analyzer';
-import { GeographicOptimizerService } from '../services/geographic-optimizer';
-import { RecommendationModelService } from '../services/recommendation-model';
+import { InsightEngineService } from '@features/carbon-insights/services/insight-engine';
+import { ImpactTrackerService } from '@features/carbon-insights/services/impact-tracker';
+import { PatternAnalyzerService } from '@features/carbon-insights/services/pattern-analyzer';
+import { GeographicOptimizerService } from '@features/carbon-insights/services/geographic-optimizer';
+import { RecommendationModelService } from '@features/carbon-insights/services/recommendation-model';
 
 export class InsightsController {
   private insightEngine: InsightEngineService;
@@ -21,10 +21,6 @@ export class InsightsController {
     this.recommendationModel = RecommendationModelService.getInstance();
   }
 
-  /**
-   * GET /api/carbon-insights/insights/:userId
-   * Get personalized carbon insights for a user
-   */
   async getInsights(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -73,10 +69,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/patterns/:userId
-   * Get user's development patterns analysis
-   */
   async getPatterns(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -127,10 +119,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/geographic/:userId
-   * Get geographic context and optimization suggestions
-   */
   async getGeographicContext(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -178,10 +166,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * POST /api/carbon-insights/implementation
-   * Record implementation of an insight
-   */
   async recordImplementation(req: Request, res: Response): Promise<void> {
     try {
       const { userId, insightId, status, notes } = req.body;
@@ -235,10 +219,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/impact/:insightId
-   * Get impact measurement for a specific insight
-   */
   async getImpact(req: Request, res: Response): Promise<void> {
     try {
       const { insightId } = req.params;
@@ -286,10 +266,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/report/:userId
-   * Generate comprehensive impact report for user
-   */
   async getImpactReport(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -340,10 +316,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * POST /api/carbon-insights/feedback
-   * Submit user feedback on insight effectiveness
-   */
   async submitFeedback(req: Request, res: Response): Promise<void> {
     try {
       const { userId, insightId, satisfaction } = req.body;
@@ -356,7 +328,6 @@ export class InsightsController {
         return;
       }
 
-      // Validate satisfaction object structure
       const requiredFields = ['overallRating', 'easeOfImplementation', 'effectivenessRating', 'willingnessToRecommend'];
       for (const field of requiredFields) {
         if (!satisfaction[field] || satisfaction[field] < 1 || satisfaction[field] > 5) {
@@ -372,9 +343,8 @@ export class InsightsController {
 
       await this.impactTracker.collectUserFeedback(userId, insightId, satisfaction);
 
-      // Also update ML model with feedback
       const implemented = satisfaction.effectivenessRating >= 3;
-      const effectiveness = satisfaction.effectivenessRating / 5; // Normalize to 0-1
+      const effectiveness = satisfaction.effectivenessRating / 5;
       
       await this.recommendationModel.updateFromFeedback(userId, insightId, implemented, effectiveness);
 
@@ -405,10 +375,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/model/metrics
-   * Get ML model performance metrics
-   */
   async getModelMetrics(req: Request, res: Response): Promise<void> {
     try {
       logger.info('Getting model metrics', { ip: req.ip });
@@ -434,10 +400,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * POST /api/carbon-insights/refresh/:userId
-   * Force refresh of insights for a user (clears cache)
-   */
   async refreshInsights(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -452,15 +414,13 @@ export class InsightsController {
 
       logger.info('Refreshing insights for user', { userId });
 
-      // Clear relevant caches
       const cacheService = new (await import('@shared/utils/cache')).CacheService();
       await Promise.all([
         cacheService.delete(`insights:${userId}`),
         cacheService.delete(`patterns:${userId}:30d`),
-        cacheService.delete(`grid-data:*`) // Clear geographic data cache
+        cacheService.delete(`grid-data:*`)
       ]);
 
-      // Generate fresh insights
       const insights = await this.insightEngine.generateInsights(userId);
 
       res.json({
@@ -491,10 +451,6 @@ export class InsightsController {
     }
   }
 
-  /**
-   * GET /api/carbon-insights/health
-   * Health check for the carbon insights service
-   */
   async healthCheck(req: Request, res: Response): Promise<void> {
     try {
       const health = {

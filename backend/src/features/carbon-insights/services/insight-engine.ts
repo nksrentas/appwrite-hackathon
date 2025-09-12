@@ -10,10 +10,10 @@ import {
   ImplementationStatus,
   ImplementationStep,
   StepType
-} from '../types';
-import { PatternAnalyzerService } from './pattern-analyzer';
-import { GeographicOptimizerService } from './geographic-optimizer';
-import { RecommendationModelService } from './recommendation-model';
+} from '@features/carbon-insights/types';
+import { PatternAnalyzerService } from '@features/carbon-insights/services/pattern-analyzer';
+import { GeographicOptimizerService } from '@features/carbon-insights/services/geographic-optimizer';
+import { RecommendationModelService } from '@features/carbon-insights/services/recommendation-model';
 import { CacheService } from '@shared/utils/cache';
 
 export class InsightEngineService {
@@ -37,14 +37,10 @@ export class InsightEngineService {
     return InsightEngineService.instance;
   }
 
-  /**
-   * Generate personalized carbon insights for a user
-   */
   async generateInsights(userId: string): Promise<CarbonInsight[]> {
     try {
       logger.info('Generating insights for user', { userId });
 
-      // Check cache first
       const cacheKey = `insights:${userId}`;
       const cachedInsights = await this.cache.get(cacheKey);
       if (cachedInsights) {
@@ -52,14 +48,12 @@ export class InsightEngineService {
         return cachedInsights;
       }
 
-      // Get user profile and patterns
       const [userProfile, patterns, geographicContext] = await Promise.all([
         this.getUserProfile(userId),
         this.patternAnalyzer.analyzeUserPatterns(userId),
         this.geographicOptimizer.getGeographicContext(userId)
       ]);
 
-      // Generate insights using multiple approaches
       const [
         timingInsights,
         geographicInsights,
@@ -74,7 +68,6 @@ export class InsightEngineService {
         this.mlModel.predict(userProfile, patterns, geographicContext)
       ]);
 
-      // Combine and rank insights
       const allInsights = [
         ...timingInsights,
         ...geographicInsights,
@@ -85,7 +78,6 @@ export class InsightEngineService {
 
       const rankedInsights = this.rankAndFilterInsights(allInsights, userProfile);
       
-      // Cache results for 1 hour
       await this.cache.set(cacheKey, rankedInsights, { ttl: 3600 });
 
       logger.info('Generated insights for user', { 
@@ -100,9 +92,6 @@ export class InsightEngineService {
     }
   }
 
-  /**
-   * Generate timing-based insights for optimal development scheduling
-   */
   private async generateTimingInsights(
     profile: UserProfile,
     patterns: DevelopmentPattern,
@@ -110,15 +99,14 @@ export class InsightEngineService {
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Analyze grid carbon intensity patterns
     const lowCarbonWindows = context.forecast24h
       .filter(f => f.intensity < context.currentCarbonIntensity * 0.7)
-      .slice(0, 3); // Top 3 opportunities
+      .slice(0, 3);
 
     for (const window of lowCarbonWindows) {
       const carbonReduction = this.calculateTimingReduction(patterns, context, window);
       
-      if (carbonReduction > 0.1) { // Minimum 100g CO2e reduction
+      if (carbonReduction > 0.1) {
         insights.push(this.createTimingInsight(window, carbonReduction, patterns));
       }
     }
@@ -126,9 +114,6 @@ export class InsightEngineService {
     return insights;
   }
 
-  /**
-   * Generate geographic optimization insights
-   */
   private async generateGeographicInsights(
     profile: UserProfile,
     patterns: DevelopmentPattern,
@@ -137,16 +122,12 @@ export class InsightEngineService {
     return this.geographicOptimizer.generateLocationInsights(profile.userId);
   }
 
-  /**
-   * Generate tooling optimization insights
-   */
   private async generateToolingInsights(
     profile: UserProfile,
     patterns: DevelopmentPattern
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Analyze tool usage efficiency
     for (const tool of patterns.toolUsage.primaryTools) {
       if (tool.efficiencyScore < 0.7) {
         const alternatives = tool.alternatives.filter(alt => 
@@ -159,7 +140,6 @@ export class InsightEngineService {
       }
     }
 
-    // Analyze CI/CD optimization opportunities
     for (const cicd of patterns.toolUsage.cicdPatterns) {
       if (cicd.cacheHitRatio < 0.8) {
         insights.push(this.createCICDCacheInsight(cicd, patterns));
@@ -173,21 +153,16 @@ export class InsightEngineService {
     return insights;
   }
 
-  /**
-   * Generate workflow optimization insights
-   */
   private async generateWorkflowInsights(
     profile: UserProfile,
     patterns: DevelopmentPattern
   ): Promise<CarbonInsight[]> {
     const insights: CarbonInsight[] = [];
 
-    // Analyze build frequency patterns
     if (patterns.buildFrequency.averageBuildsPerDay > 20) {
       insights.push(this.createBuildFrequencyInsight(patterns));
     }
 
-    // Analyze working habits for carbon efficiency
     const inefficientPatterns = patterns.carbonIntensivePatterns.filter(
       p => p.optimizationOpportunities.some(o => o.riskLevel === 'low')
     );
@@ -205,9 +180,6 @@ export class InsightEngineService {
     return insights;
   }
 
-  /**
-   * Create timing-based insight
-   */
   private createTimingInsight(
     window: any,
     carbonReduction: number,
@@ -250,9 +222,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Create tooling optimization insight
-   */
   private createToolingInsight(
     currentTool: any,
     alternative: any,
@@ -294,9 +263,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Generate implementation instructions for timing optimization
-   */
   private generateTimingInstructions(window: any): ImplementationStep[] {
     return [
       {
@@ -324,9 +290,6 @@ export class InsightEngineService {
     ];
   }
 
-  /**
-   * Generate implementation instructions for tooling optimization
-   */
   private generateToolingInstructions(currentTool: any, alternative: any): ImplementationStep[] {
     return [
       {
@@ -356,27 +319,20 @@ export class InsightEngineService {
     ];
   }
 
-  /**
-   * Calculate carbon reduction potential from timing optimization
-   */
   private calculateTimingReduction(
     patterns: DevelopmentPattern,
     context: GeographicContext,
     window: any
   ): number {
-    const dailyBuildCarbon = patterns.buildFrequency.averageBuildsPerDay * 0.5; // Assume 0.5kg per build
+    const dailyBuildCarbon = patterns.buildFrequency.averageBuildsPerDay * 0.5;
     const reductionFactor = 1 - (window.intensity / context.currentCarbonIntensity);
     return dailyBuildCarbon * reductionFactor;
   }
 
-  /**
-   * Rank and filter insights based on user profile and preferences
-   */
   private rankAndFilterInsights(
     insights: CarbonInsight[],
     profile: UserProfile
   ): CarbonInsight[] {
-    // Filter by complexity preference
     let filtered = insights.filter(insight => {
       if (profile.preferences.complexityPreference === 'simple') {
         return insight.implementationComplexity === 'low';
@@ -386,28 +342,21 @@ export class InsightEngineService {
       return true;
     });
 
-    // Calculate ranking score
     filtered = filtered.map(insight => ({
       ...insight,
       rankingScore: this.calculateRankingScore(insight, profile)
     }));
 
-    // Sort by ranking score and return top 10
     return filtered
       .sort((a, b) => (b as any).rankingScore - (a as any).rankingScore)
       .slice(0, 10);
   }
 
-  /**
-   * Calculate ranking score for insight prioritization
-   */
   private calculateRankingScore(insight: CarbonInsight, profile: UserProfile): number {
     let score = 0;
 
-    // Carbon reduction potential (0-40 points)
     score += Math.min(insight.expectedReduction * 10, 40);
 
-    // Implementation ease (0-30 points)
     const complexityScore = {
       'low': 30,
       'medium': 20,
@@ -415,19 +364,14 @@ export class InsightEngineService {
     }[insight.implementationComplexity];
     score += complexityScore;
 
-    // Confidence (0-20 points)
     score += insight.confidence * 20;
 
-    // User sustainability goals alignment (0-10 points)
     const goalAlignment = this.calculateGoalAlignment(insight, profile);
     score += goalAlignment * 10;
 
     return score;
   }
 
-  /**
-   * Calculate how well an insight aligns with user's sustainability goals
-   */
   private calculateGoalAlignment(insight: CarbonInsight, profile: UserProfile): number {
     if (!profile.sustainabilityGoals) return 0.5;
 
@@ -437,11 +381,7 @@ export class InsightEngineService {
     return alignmentScore;
   }
 
-  /**
-   * Get user profile (placeholder - should integrate with user service)
-   */
   private async getUserProfile(userId: string): Promise<UserProfile> {
-    // TODO: Integrate with actual user service
     return {
       userId,
       location: {
@@ -482,9 +422,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Create CI/CD cache optimization insight
-   */
   private createCICDCacheInsight(cicd: any, patterns: DevelopmentPattern): CarbonInsight {
     return {
       id: `cicd-cache-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -534,9 +471,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Create CI/CD parallelization insight
-   */
   private createCICDParallelizationInsight(cicd: any, patterns: DevelopmentPattern): CarbonInsight {
     return {
       id: `cicd-parallel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -586,9 +520,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Create build frequency optimization insight
-   */
   private createBuildFrequencyInsight(patterns: DevelopmentPattern): CarbonInsight {
     return {
       id: `build-freq-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -638,9 +569,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Create workflow optimization insight from high-carbon pattern
-   */
   private createWorkflowInsight(pattern: any, opportunity: any): CarbonInsight {
     return {
       id: `workflow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -691,9 +619,6 @@ export class InsightEngineService {
     };
   }
 
-  /**
-   * Helper methods for calculations
-   */
   private calculateCacheOptimizationReduction(cicd: any, patterns: DevelopmentPattern): number {
     const currentWaste = patterns.buildFrequency.averageBuildsPerDay * (1 - cicd.cacheHitRatio) * 0.3;
     const targetCacheRate = 0.8;
@@ -705,7 +630,7 @@ export class InsightEngineService {
     const buildTime = patterns.buildFrequency.buildDurationDistribution.mean;
     const parallelFactor = Math.max(2, Math.min(4, cicd.averageBuildsPerCommit));
     const timeReduction = buildTime * (1 - 1/parallelFactor);
-    return (timeReduction / 60) * 0.1; // Assume 0.1kg CO2e per minute saved
+    return (timeReduction / 60) * 0.1;
   }
 
   private getCronExpression(timestamp: string): string {
