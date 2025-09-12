@@ -14,7 +14,6 @@ import {
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
 import { useDashboardStore } from '@features/dashboard/stores/dashboard.store';
-import { ConnectionStatus } from '@features/dashboard/components/connection-status';
 import { Button } from '@shared/components/ui/button';
 import { Badge } from '@shared/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@shared/components/ui/avatar';
@@ -165,14 +164,6 @@ export default function DashboardLayout() {
               </div>
 
               <div className="flex items-center space-x-2">
-                <ConnectionStatus
-                  isConnected={isConnected}
-                  isLoading={isLoading}
-                  lastUpdated={metrics?.lastUpdated}
-                  errorMessage={error || undefined}
-                  onReconnect={handleReconnect}
-                />
-
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
