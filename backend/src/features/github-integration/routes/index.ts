@@ -60,7 +60,7 @@ const validateRequest = (req: Request, res: Response, next: NextFunction) => {
       method: req.method
     });
 
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: {
         code: 'VALIDATION_ERROR',
@@ -232,6 +232,7 @@ export const webhookSecurityMiddleware = (req: any, res: any, next: any) => {
   // Basic validation of GitHub webhook headers
   if (!userAgent || !userAgent.startsWith('GitHub-Hookshot/')) {
     logger.githubError('Invalid webhook user agent', {
+      error: 'Invalid webhook user agent',
       userAgent,
       ip: req.ip,
       path: req.path
@@ -248,6 +249,7 @@ export const webhookSecurityMiddleware = (req: any, res: any, next: any) => {
 
   if (!signature || !delivery || !event) {
     logger.githubError('Missing webhook headers', {
+      error: 'Missing webhook headers',
       hasSignature: !!signature,
       hasDelivery: !!delivery,
       hasEvent: !!event,

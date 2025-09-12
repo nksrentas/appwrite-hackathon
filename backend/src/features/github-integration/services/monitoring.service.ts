@@ -92,7 +92,7 @@ export class GitHubMonitoringService {
     this.healthCheckInterval = setInterval(async () => {
       try {
         await this.performHealthCheck();
-        await this.collectMetrics();
+        // await this.collectMetrics(); // TODO: Implement this method
         await this.performMaintenance();
       } catch (error) {
         logger.githubError('Monitoring cycle failed', {
@@ -340,7 +340,7 @@ export class GitHubMonitoringService {
       }
 
       const data = await response.json();
-      const rateLimitRemaining = data.rate?.remaining || 0;
+      const rateLimitRemaining = (data as any).rate?.remaining || 0;
 
       if (rateLimitRemaining < 100) {
         issues.push('GitHub API rate limit is low');

@@ -15,7 +15,7 @@ import { insightsRoutes, carbonInsightsWebSocket } from '@features/carbon-insigh
 // Temporarily disabled developer leaderboards integration due to TypeScript compilation issues
 // Feature implementation is complete and moved to documentation/design/features/done/
 // import { developerLeaderboardsRoutes, integrationService } from '@features/developer-leaderboards';
-// Temporarily disabled GitHub integration
+// Temporarily disable GitHub integration due to TypeScript compilation issues
 // import { 
 //   githubRoutes, 
 //   webhookRoutes, 
@@ -68,6 +68,78 @@ app.use((req, res, next) => {
 
 // Mount Carbon Insights routes
 app.use('/api/insights', insightsRoutes);
+
+// Temporary GitHub Mock API
+app.get('/api/github/status', (_req, res) => {
+  res.json({
+    success: false,
+    error: {
+      code: 'NOT_CONNECTED',
+      message: 'GitHub integration not available - connect your account to enable carbon tracking'
+    }
+  });
+});
+
+app.post('/api/github/oauth/initiate', (_req, res) => {
+  // For demo purposes, generate a mock auth URL
+  const state = Math.random().toString(36).substring(2, 15);
+  const authUrl = `https://github.com/login/oauth/authorize?client_id=demo&redirect_uri=http://localhost:3000/integrations/github&scope=repo&state=${state}`;
+  
+  res.json({
+    success: true,
+    data: {
+      authUrl,
+      state
+    }
+  });
+});
+
+app.post('/api/github/oauth/callback', (_req, res) => {
+  res.json({
+    success: true,
+    data: {
+      id: 'mock-connection-1',
+      userId: 'user-1',
+      githubUserId: '12345',
+      githubUsername: 'demo-user',
+      githubAvatarUrl: 'https://avatars.githubusercontent.com/u/12345',
+      scopes: ['repo', 'user:email'],
+      isActive: true,
+      connectedAt: new Date(),
+      lastSyncAt: new Date(),
+      connectionHealth: 'healthy',
+      totalRepositories: 5,
+      trackedRepositories: 0
+    }
+  });
+});
+
+app.get('/api/github/repositories', (_req, res) => {
+  res.json({
+    success: true,
+    data: [
+      {
+        id: 1,
+        name: 'demo-project',
+        fullName: 'demo-user/demo-project',
+        description: 'A demo React project',
+        private: false,
+        language: 'TypeScript',
+        defaultBranch: 'main',
+        stargazersCount: 42,
+        forksCount: 8,
+        size: 1024,
+        lastPushAt: new Date(),
+        isOwner: true,
+        permissions: { admin: true, maintain: true, push: true, triage: true, pull: true },
+        owner: { login: 'demo-user', type: 'User', avatarUrl: 'https://avatars.githubusercontent.com/u/12345' },
+        trackingEnabled: false,
+        webhookStatus: null,
+        lastActivity: null
+      }
+    ]
+  });
+});
 
 app.get('/api/dashboard/carbon/:userId', async (req, res) => {
   const startTime = Date.now();

@@ -332,8 +332,8 @@ export class GitHubOAuthService {
 
       const tokenData = await response.json();
 
-      if (tokenData.error) {
-        throw new Error(`GitHub OAuth error: ${tokenData.error_description}`);
+      if ((tokenData as any).error) {
+        throw new Error(`GitHub OAuth error: ${(tokenData as any).error_description}`);
       }
 
       return tokenData;
