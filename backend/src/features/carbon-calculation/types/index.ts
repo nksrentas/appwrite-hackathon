@@ -179,23 +179,6 @@ export interface ElectricityMapsData {
   renewablePercentage?: number | null;
 }
 
-export interface AWSCarbonData {
-  region: string;
-  service: string;
-  carbonIntensity: number;
-  unit: string;
-  timestamp: string;
-  methodology: string;
-}
-
-export interface GSFCarbonData {
-  region: string;
-  carbonIntensity: number;
-  timestamp: string;
-  methodology: string;
-  confidence: 'low' | 'medium' | 'high' | 'very_high';
-  source: string;
-}
 
 export interface CircuitBreakerState {
   isOpen: boolean;

@@ -173,9 +173,6 @@ class RealTimeEmissionUpdatesService {
         case 'electricity_maps':
           updates.push(...await this.updateElectricityMapFactors());
           break;
-        case 'aws_carbon':
-          updates.push(...await this.updateAWSCarbonFactors());
-          break;
         case 'epa_egrid':
           updates.push(...await this.updateEPAGridFactors());
           break;
@@ -264,61 +261,6 @@ class RealTimeEmissionUpdatesService {
     return updates;
   }
 
-  private async updateAWSCarbonFactors(): Promise<EmissionFactorUpdate[]> {
-    const updates: EmissionFactorUpdate[] = [];
-    const regions = ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'];
-    
-    for (const region of regions) {
-      try {
-        const currentData = await externalAPIService.getAWSCarbonData(region, 'ec2');
-        if (!currentData) continue;
-        
-        const factorId = `aws_carbon_${region}`;
-        const currentFactor = this.currentFactors.get(factorId);
-        const newValue = currentData.carbonIntensity / 1000;
-        
-        if (currentFactor && Math.abs(newValue - currentFactor.value) > 0.01) {
-          const change = newValue - currentFactor.value;
-          const changePercent = (change / currentFactor.value) * 100;
-          
-          updates.push({
-            factorId,
-            source: 'AWS_Carbon',
-            oldValue: currentFactor.value,
-            newValue,
-            change,
-            changePercent,
-            timestamp: currentData.timestamp,
-            region,
-            impactScope: this.getImpactScope(Math.abs(changePercent))
-          });
-          
-          this.currentFactors.set(factorId, {
-            ...currentFactor,
-            value: newValue,
-            lastUpdated: currentData.timestamp
-          });
-        } else if (!currentFactor) {
-          this.currentFactors.set(factorId, {
-            id: factorId,
-            name: `AWS Carbon - ${region}`,
-            value: newValue,
-            unit: 'kg_CO2_per_kWh',
-            source: 'AWS_Carbon',
-            region,
-            lastUpdated: currentData.timestamp,
-            validFrom: currentData.timestamp
-          });
-        }
-      } catch (error: any) {
-        logger.warn(`Failed to update AWS carbon factor for ${region}`, {
-          error: error.message
-        });
-      }
-    }
-    
-    return updates;
-  }
 
   private async updateEPAGridFactors(): Promise<EmissionFactorUpdate[]> {
     const updates: EmissionFactorUpdate[] = [];

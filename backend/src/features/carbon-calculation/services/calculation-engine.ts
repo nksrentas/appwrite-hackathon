@@ -140,23 +140,6 @@ class CarbonCalculationEngine {
     const networkEmission = await this.calculateNetworkEmission(activity, context);
     steps.push(networkEmission);
 
-    if (activity.metadata.provider === 'aws') {
-      const awsData = await externalAPIService.getAWSCarbonData(
-        activity.metadata.region,
-        'ec2'
-      );
-      
-      if (awsData) {
-        steps.push({
-          name: 'aws_carbon_adjustment',
-          description: 'AWS-specific carbon intensity adjustment',
-          value: awsData.carbonIntensity * 0.1,
-          unit: 'kg_CO2',
-          confidence: 0.9,
-          sources: ['AWS Customer Carbon Footprint Tool']
-        });
-      }
-    }
 
     return steps;
   }
@@ -656,18 +639,10 @@ class CarbonCalculationEngine {
           updateFrequency: 'Real-time',
           confidence: 'high',
           lastUpdated: new Date().toISOString()
-        },
-        {
-          name: 'AWS Carbon API',
-          description: 'AWS cloud infrastructure carbon data',
-          coverage: 'AWS regions',
-          updateFrequency: 'Hourly',
-          confidence: 'high',
-          lastUpdated: new Date().toISOString()
         }
       ],
       methodology: 'Multi-source validation with conservative estimation',
-      totalSources: 3
+      totalSources: 2
     };
   }
 

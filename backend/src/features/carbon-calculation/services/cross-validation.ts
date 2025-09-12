@@ -81,15 +81,6 @@ class CrossValidationService {
   private initializeCalculators(): void {
     const calculators: ExternalCalculator[] = [
       {
-        name: 'Carbon Interface',
-        url: 'https://www.carboninterface.com/api/v1',
-        apiKey: process.env.CARBON_INTERFACE_API_KEY,
-        isEnabled: !!process.env.CARBON_INTERFACE_API_KEY,
-        reliability: 0.92,
-        supportedActivities: ['electricity', 'cloud_compute', 'data_transfer'],
-        averageResponseTime: 1200
-      },
-      {
         name: 'Climatiq',
         url: 'https://beta4.api.climatiq.io',
         apiKey: process.env.CLIMATIQ_API_KEY,
@@ -215,7 +206,6 @@ class CrossValidationService {
     const baseEmission = 0.001;
     
     const calculatorBias: Record<string, number> = {
-      'Carbon Interface': 1.02,
       'Climatiq': 0.98
     };
     

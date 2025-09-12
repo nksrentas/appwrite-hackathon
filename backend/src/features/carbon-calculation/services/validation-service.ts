@@ -5,10 +5,7 @@ import {
   ValidationError,
   ValidationWarning,
   CrossReference,
-  DataSource,
-  // EPAGridData,
-  // ElectricityMapsData,
-  // AWSCarbonData
+  DataSource
 } from '../types';
 import { epaGridService } from '../integrations/epa-egrid';
 import { externalAPIService } from '../integrations/external-apis';
@@ -69,18 +66,14 @@ class DataValidationService {
     'carbonfund_org',
     'carbonfootprint_com',
     'epa_calculator',
-    'carbon_interface',
     'climatiq',
     'cloud_carbon_footprint'
   ];
   private readonly SOURCE_WEIGHTS = {
-    'EPA_eGRID': 0.35,
-    'Electricity_Maps': 0.25,
-    'AWS_Carbon': 0.20,
-    'Green_Software_Foundation': 0.15,
-    'IPCC': 0.05
+    'EPA_eGRID': 0.70,
+    'Electricity_Maps': 0.30
   };
-  private readonly MIN_SOURCES_FOR_CONSENSUS = 3;
+  private readonly MIN_SOURCES_FOR_CONSENSUS = 2;
 
   constructor() {
     this.cache = new CacheService();
@@ -499,9 +492,6 @@ class DataValidationService {
       let result: number | null = null;
       
       switch (calculator) {
-        case 'carbon_interface':
-          result = await this.getCarbonInterfaceCalculation(activityData);
-          break;
         case 'climatiq':
           result = await this.getClimatiqCalculation(activityData);
           break;
@@ -527,18 +517,6 @@ class DataValidationService {
     }
   }
 
-  private async getCarbonInterfaceCalculation(activityData: ActivityData): Promise<number | null> {
-    const apiKey = process.env.CARBON_INTERFACE_API_KEY;
-    if (!apiKey) return this.getEstimateForCalculator(activityData, 'carbon_interface');
-    
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 800 + 200));
-    
-    if (Math.random() < 0.05) {
-      throw new Error('Carbon Interface API timeout');
-    }
-    
-    return this.getEstimateForCalculator(activityData, 'carbon_interface');
-  }
 
   private async getClimatiqCalculation(activityData: ActivityData): Promise<number | null> {
     await new Promise(resolve => setTimeout(resolve, Math.random() * 600 + 300));
@@ -578,7 +556,6 @@ class DataValidationService {
     const baseEmission = 0.001;
     
     const calculatorBias: Record<string, number> = {
-      'carbon_interface': 1.05,
       'climatiq': 0.95,
       'cloud_carbon_footprint': 1.15,
       'carbonfund_org': 0.90,
@@ -960,11 +937,9 @@ class DataValidationService {
     const comparisons: DataSourceComparison[] = [];
     
     try {
-      const [epaData, electricityData, awsData, gsfData] = await Promise.allSettled([
+      const [epaData, electricityData] = await Promise.allSettled([
         this.getEPAComparison(activityData),
-        this.getElectricityMapsComparison(activityData),
-        this.getAWSComparison(activityData),
-        this.getGSFComparison(activityData)
+        this.getElectricityMapsComparison(activityData)
       ]);
 
       if (epaData.status === 'fulfilled' && epaData.value) {
@@ -972,12 +947,6 @@ class DataValidationService {
       }
       if (electricityData.status === 'fulfilled' && electricityData.value) {
         comparisons.push(electricityData.value);
-      }
-      if (awsData.status === 'fulfilled' && awsData.value) {
-        comparisons.push(awsData.value);
-      }
-      if (gsfData.status === 'fulfilled' && gsfData.value) {
-        comparisons.push(gsfData.value);
       }
 
       comparisons.push({
@@ -1029,37 +998,7 @@ class DataValidationService {
     };
   }
 
-  private async getAWSComparison(activityData: ActivityData): Promise<DataSourceComparison | null> {
-    if (activityData.activityType !== 'cloud_compute') return null;
-    
-    const region = this.getAWSRegionFromActivity(activityData);
-    const awsData = await externalAPIService.getAWSCarbonData(region, 'ec2');
-    if (!awsData) return null;
 
-    return {
-      source: 'AWS_Carbon',
-      value: (awsData.carbonIntensity / 1000) * this.estimateEnergyConsumption(activityData),
-      confidence: 0.8,
-      lastUpdated: awsData.timestamp,
-      weight: this.SOURCE_WEIGHTS['AWS_Carbon'],
-      isOutlier: false
-    };
-  }
-
-  private async getGSFComparison(activityData: ActivityData): Promise<DataSourceComparison | null> {
-    const location = activityData.location?.country || 'US';
-    const gsfData = await externalAPIService.getGSFCarbonData(location);
-    if (!gsfData) return null;
-
-    return {
-      source: 'Green_Software_Foundation',
-      value: (gsfData.carbonIntensity / 1000) * this.estimateEnergyConsumption(activityData),
-      confidence: 0.75,
-      lastUpdated: gsfData.timestamp,
-      weight: this.SOURCE_WEIGHTS['Green_Software_Foundation'],
-      isOutlier: false
-    };
-  }
 
   private estimateEnergyConsumption(activityData: ActivityData): number {
     switch (activityData.activityType) {
@@ -1088,19 +1027,6 @@ class DataValidationService {
     return country;
   }
 
-  private getAWSRegionFromActivity(activityData: ActivityData): string {
-    const region = activityData.location?.region;
-    const regionMap: Record<string, string> = {
-      'CA': 'us-west-1',
-      'TX': 'us-south-1',
-      'NY': 'us-east-1',
-      'VA': 'us-east-1',
-      'OR': 'us-west-2',
-      'WA': 'us-west-2'
-    };
-    
-    return regionMap[region || ''] || 'us-east-1';
-  }
 
   private getConfidenceScore(confidence: string): number {
     const scores: Record<string, number> = {

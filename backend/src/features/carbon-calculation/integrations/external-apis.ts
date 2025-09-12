@@ -3,9 +3,7 @@ import * as cron from 'node-cron';
 import CircuitBreaker from 'opossum';
 import { 
   ElectricityMapsData, 
-  AWSCarbonData, 
-  DataSource,
-  GSFCarbonData 
+  DataSource
 } from '@features/carbon-calculation/types';
 import { logger } from '@shared/utils/logger';
 import { CacheService } from '@shared/utils/cache';
@@ -45,13 +43,9 @@ interface CircuitBreakerState {
 
 class ExternalAPIIntegrations {
   private electricityMapsClient: AxiosInstance;
-  private awsCarbonClient: AxiosInstance;
-  private gsfClient: AxiosInstance;
   private cache: CacheService;
   
   private electricityMapsBreaker!: CircuitBreaker;
-  private awsBreaker!: CircuitBreaker;
-  private gsfBreaker!: CircuitBreaker;
   
   private healthMetrics: Map<string, APIHealthMetrics> = new Map();
   private rateLimits: Map<string, { requests: number; resetTime: number; limit: number }> = new Map();
@@ -67,7 +61,6 @@ class ExternalAPIIntegrations {
     this.useMockData = this.isDevelopmentMode && Boolean(
       process.env.ELECTRICITY_MAPS_API_KEY?.includes('mock') || 
       process.env.ELECTRICITY_MAPS_API_KEY?.includes('development') ||
-      process.env.AWS_CARBON_API_KEY?.includes('mock') ||
       process.env.EPA_EGRID_API_KEY?.includes('mock')
     );
     
@@ -81,25 +74,6 @@ class ExternalAPIIntegrations {
       }
     });
 
-    this.awsCarbonClient = axios.create({
-      baseURL: 'https://sustainability.aboutamazon.com/api',
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'EcoTrace-CarbonCalculator/1.0',
-        'Accept': 'application/json',
-        'X-API-Version': '2022-12-01'
-      }
-    });
-
-    this.gsfClient = axios.create({
-      baseURL: 'https://api.greensoftware.foundation/v1',
-      timeout: 8000,
-      headers: {
-        'Authorization': `Bearer ${process.env.GSF_API_KEY || ''}`,
-        'User-Agent': 'EcoTrace-CarbonCalculator/1.0',
-        'Accept': 'application/json'
-      }
-    });
 
     this.initializeCircuitBreakers();
     this.setupRequestInterceptors();
@@ -124,29 +98,12 @@ class ExternalAPIIntegrations {
       }
     );
 
-    this.awsBreaker = new CircuitBreaker(
-      this.fetchAWSCarbonRaw.bind(this),
-      {
-        ...breakerOptions,
-        name: 'AWSCarbonAPI',
-        timeout: 15000
-      }
-    );
-
-    this.gsfBreaker = new CircuitBreaker(
-      this.fetchGSFCarbonRaw.bind(this),
-      {
-        ...breakerOptions,
-        name: 'GSFCarbonAPI',
-        timeout: 8000
-      }
-    );
 
     this.setupCircuitBreakerEvents();
   }
 
   private setupCircuitBreakerEvents(): void {
-    [this.electricityMapsBreaker, this.awsBreaker, this.gsfBreaker].forEach(breaker => {
+    [this.electricityMapsBreaker].forEach(breaker => {
       breaker.on('open', () => {
         logger.warn(`Circuit breaker opened for ${breaker.name}`, {
           metadata: {
@@ -189,8 +146,8 @@ class ExternalAPIIntegrations {
   }
 
   private setupRequestInterceptors(): void {
-    [this.electricityMapsClient, this.awsCarbonClient, this.gsfClient].forEach((client, index) => {
-      const serviceName = ['ElectricityMaps', 'AWS', 'GSF'][index];
+    [this.electricityMapsClient].forEach((client, index) => {
+      const serviceName = ['ElectricityMaps'][index];
       
       client.interceptors.request.use(
         (config: InternalAxiosRequestConfig) => {
@@ -219,7 +176,7 @@ class ExternalAPIIntegrations {
   }
 
   private initializeHealthMonitoring(): void {
-    ['ElectricityMaps', 'AWS', 'GSF'].forEach(service => {
+    ['ElectricityMaps'].forEach(service => {
       this.healthMetrics.set(service, {
         service,
         isAvailable: true,
@@ -240,7 +197,7 @@ class ExternalAPIIntegrations {
   }
 
   private initializeRateLimitTracking(): void {
-    ['ElectricityMaps', 'AWS', 'GSF'].forEach(service => {
+    ['ElectricityMaps'].forEach(service => {
       this.rateLimits.set(service, {
         requests: 0,
         resetTime: Date.now() + 3600000,
@@ -310,9 +267,7 @@ class ExternalAPIIntegrations {
 
   private async performHealthChecks(): Promise<void> {
     const healthChecks = [
-      this.checkElectricityMapsHealth(),
-      this.checkAWSHealth(),
-      this.checkGSFHealth()
+      this.checkElectricityMapsHealth()
     ];
 
     await Promise.allSettled(healthChecks);
@@ -327,23 +282,6 @@ class ExternalAPIIntegrations {
     }
   }
 
-  private async checkAWSHealth(): Promise<void> {
-    try {
-      await this.awsCarbonClient.get('/health', { timeout: 5000 });
-      this.updateHealthMetrics('AWS', true, 0);
-    } catch (error: any) {
-      this.updateHealthMetrics('AWS', false, 0, error);
-    }
-  }
-
-  private async checkGSFHealth(): Promise<void> {
-    try {
-      await this.gsfClient.get('/health', { timeout: 5000 });
-      this.updateHealthMetrics('GSF', true, 0);
-    } catch (error: any) {
-      this.updateHealthMetrics('GSF', false, 0, error);
-    }
-  }
 
   private resetHourlyMetrics(): void {
     this.healthMetrics.forEach(metrics => {
@@ -356,10 +294,6 @@ class ExternalAPIIntegrations {
     switch (service) {
       case 'ElectricityMaps':
         return this.electricityMapsBreaker.opened;
-      case 'AWS':
-        return this.awsBreaker.opened;
-      case 'GSF':
-        return this.gsfBreaker.opened;
       default:
         return false;
     }
@@ -443,162 +377,11 @@ class ExternalAPIIntegrations {
     };
   }
 
-  public async getAWSCarbonData(region: string, service: string): Promise<AWSCarbonData | null> {
-    const cacheKey = `aws_carbon_${region}_${service}`;
-    const cached = await this.cache.get(cacheKey) as AWSCarbonData | null;
-    
-    if (cached && this.isCacheValid(cached.timestamp, 900000)) {
-      return cached;
-    }
 
-    try {
-      const data = await this.awsBreaker.fire(region, service) as AWSCarbonData | null;
-      
-      if (data) {
-        await this.cache.set(cacheKey, data, { ttl: 900000 });
-      }
-      
-      return data;
-    } catch (error: any) {
-      logger.warn('AWS Carbon API failed, using cached data if available', {
-        metadata: {
-          region,
-          service,
-          error: error.message,
-          cacheAvailable: !!cached
-        }
-      });
-      
-      return cached || null;
-    }
-  }
 
-  private async fetchAWSCarbonRaw(region: string, service: string): Promise<AWSCarbonData | null> {
-    // Return mock data in development mode
-    if (this.useMockData) {
-      logger.info('Using mock AWS Carbon data for development', { metadata: { region, service } });
-      return this.generateMockAWSCarbonData(region, service);
-    }
 
-    const response = await this.awsCarbonClient.get(`/carbon-footprint/regions/${region}/services/${service}`);
-    
-    if (!response.data) {
-      return null;
-    }
 
-    return {
-      region,
-      service,
-      carbonIntensity: response.data.carbonIntensity || 0,
-      timestamp: response.data.timestamp || new Date().toISOString(),
-      unit: response.data.unit || 'g_CO2_per_kWh',
-      methodology: response.data.methodology || 'AWS_Carbon_Footprint_Tool'
-    };
-  }
 
-  private generateMockAWSCarbonData(region: string, service: string): AWSCarbonData {
-    const baseIntensities: Record<string, number> = {
-      'us-east-1': 380,
-      'us-west-2': 280,
-      'eu-west-1': 220,
-      'ap-southeast-1': 450,
-      'default': 350
-    };
-
-    const serviceMultipliers: Record<string, number> = {
-      'ec2': 1.0,
-      'lambda': 0.7,
-      's3': 0.3,
-      'rds': 1.2,
-      'default': 1.0
-    };
-
-    const baseIntensity = baseIntensities[region] || baseIntensities.default;
-    const multiplier = serviceMultipliers[service] || serviceMultipliers.default;
-    const variation = (Math.random() - 0.5) * 0.15;
-    
-    return {
-      region,
-      service,
-      carbonIntensity: Math.round(baseIntensity * multiplier * (1 + variation)),
-      timestamp: new Date().toISOString(),
-      unit: 'g_CO2_per_kWh',
-      methodology: 'Mock_Development_Data'
-    };
-  }
-
-  public async getGSFCarbonData(region: string): Promise<GSFCarbonData | null> {
-    const cacheKey = `gsf_carbon_${region}`;
-    const cached = await this.cache.get(cacheKey) as GSFCarbonData | null;
-    
-    if (cached && this.isCacheValid(cached.timestamp, 600000)) {
-      return cached;
-    }
-
-    try {
-      const data = await this.gsfBreaker.fire(region) as GSFCarbonData | null;
-      
-      if (data) {
-        await this.cache.set(cacheKey, data, { ttl: 600000 });
-      }
-      
-      return data;
-    } catch (error: any) {
-      logger.warn('GSF API failed, using cached data if available', {
-        metadata: {
-          region,
-          error: error.message,
-          cacheAvailable: !!cached
-        }
-      });
-      
-      return cached || null;
-    }
-  }
-
-  private async fetchGSFCarbonRaw(region: string): Promise<GSFCarbonData | null> {
-    // Return mock data in development mode
-    if (this.useMockData) {
-      logger.info('Using mock GSF Carbon data for development', { metadata: { region } });
-      return this.generateMockGSFCarbonData(region);
-    }
-
-    const response = await this.gsfClient.get(`/carbon/regions/${region}`);
-    
-    if (!response.data) {
-      return null;
-    }
-
-    return {
-      region,
-      carbonIntensity: response.data.carbon_intensity || 0,
-      timestamp: response.data.timestamp || new Date().toISOString(),
-      methodology: response.data.methodology || 'SCI_Specification',
-      confidence: response.data.confidence || 'medium',
-      source: 'Green_Software_Foundation_API'
-    };
-  }
-
-  private generateMockGSFCarbonData(region: string): GSFCarbonData {
-    const baseIntensities: Record<string, number> = {
-      'US': 400,
-      'EU': 250,
-      'APAC': 520,
-      'default': 380
-    };
-
-    const baseIntensity = baseIntensities[region] || baseIntensities.default;
-    const variation = (Math.random() - 0.5) * 0.2;
-    
-    return {
-      region,
-      carbonIntensity: Math.round(baseIntensity * (1 + variation)),
-      timestamp: new Date().toISOString(),
-      methodology: 'Mock_SCI_Development_Data',
-      confidence: 'medium',
-      source: 'Mock_Development_Environment'
-    };
-  }
 
   private isCacheValid(timestamp: string, maxAgeMs: number): boolean {
     return Date.now() - new Date(timestamp).getTime() < maxAgeMs;
@@ -627,24 +410,6 @@ class ExternalAPIIntegrations {
         failureCount: (this.electricityMapsBreaker as any).stats?.failures || 0,
         successCount: (this.electricityMapsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.electricityMapsBreaker.opened ? 
-          new Date(Date.now() + 60000).toISOString() : undefined
-      },
-      {
-        service: 'AWS',
-        state: (this.awsBreaker as any).state || 'unknown',
-        isOpen: this.awsBreaker.opened,
-        failureCount: (this.awsBreaker as any).stats?.failures || 0,
-        successCount: (this.awsBreaker as any).stats?.successes || 0,
-        nextAttemptTime: this.awsBreaker.opened ? 
-          new Date(Date.now() + 60000).toISOString() : undefined
-      },
-      {
-        service: 'GSF',
-        state: (this.gsfBreaker as any).state || 'unknown',
-        isOpen: this.gsfBreaker.opened,
-        failureCount: (this.gsfBreaker as any).stats?.failures || 0,
-        successCount: (this.gsfBreaker as any).stats?.successes || 0,
-        nextAttemptTime: this.gsfBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
       }
     ];
@@ -691,30 +456,6 @@ class ExternalAPIIntegrations {
           temporal: 'Live updates every 5-15 minutes',
           activities: ['electricity']
         }
-      },
-      {
-        name: 'AWS Customer Carbon Footprint Tool',
-        type: 'AWS_Carbon',
-        lastUpdated: this.healthMetrics.get('AWS')?.lastSuccess || new Date().toISOString(),
-        freshness: 'monthly',
-        reliability: this.healthMetrics.get('AWS')?.successRate || 0,
-        coverage: {
-          geographic: ['AWS Regions'],
-          temporal: 'Monthly aggregated data',
-          activities: ['cloud_compute', 'storage', 'data_transfer']
-        }
-      },
-      {
-        name: 'Green Software Foundation',
-        type: 'GSF_SCI',
-        lastUpdated: this.healthMetrics.get('GSF')?.lastSuccess || new Date().toISOString(),
-        freshness: 'quarterly',
-        reliability: this.healthMetrics.get('GSF')?.successRate || 0,
-        coverage: {
-          geographic: ['Global'],
-          temporal: 'Quarterly methodology updates',
-          activities: ['software', 'cloud_compute']
-        }
       }
     ];
   }
@@ -729,30 +470,12 @@ class ExternalAPIIntegrations {
         successCount: (this.electricityMapsBreaker as any).stats?.successes || 0,
         nextAttemptTime: this.electricityMapsBreaker.opened ? 
           new Date(Date.now() + 60000).toISOString() : undefined
-      },
-      aws: {
-        service: 'AWS',
-        state: (this.awsBreaker as any).state || 'unknown',
-        isOpen: this.awsBreaker.opened,
-        failureCount: (this.awsBreaker as any).stats?.failures || 0,
-        successCount: (this.awsBreaker as any).stats?.successes || 0,
-        nextAttemptTime: this.awsBreaker.opened ? 
-          new Date(Date.now() + 60000).toISOString() : undefined
-      },
-      gsf: {
-        service: 'GSF',
-        state: (this.gsfBreaker as any).state || 'unknown',
-        isOpen: this.gsfBreaker.opened,
-        failureCount: (this.gsfBreaker as any).stats?.failures || 0,
-        successCount: (this.gsfBreaker as any).stats?.successes || 0,
-        nextAttemptTime: this.gsfBreaker.opened ? 
-          new Date(Date.now() + 60000).toISOString() : undefined
       }
     };
   }
 
   public async forceRefresh(service?: string): Promise<void> {
-    const services = service ? [service] : ['ElectricityMaps', 'AWS', 'GSF'];
+    const services = service ? [service] : ['ElectricityMaps'];
     
     for (const svc of services) {
       const cachePattern = svc.toLowerCase().replace(/[^a-z]/g, '_');

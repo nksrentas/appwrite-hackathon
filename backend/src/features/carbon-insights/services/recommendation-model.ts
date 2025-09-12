@@ -257,7 +257,7 @@ export class RecommendationModelService {
           type: template.type,
           title: template.title,
           description: template.description,
-          expectedReduction: template.expectedReduction * predictions[i];
+          expectedReduction: template.expectedReduction * predictions[i],
           implementationComplexity: template.complexity,
           estimatedTimeToImplement: this.estimateImplementationTime(template.complexity, predictions[i]),
           prerequisites: this.generatePrerequisites(template.type),

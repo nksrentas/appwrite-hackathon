@@ -119,8 +119,7 @@ class SCIComplianceService {
     const zone = this.getElectricityZone(activityData);
     
     try {
-      const [gsfData, electricityMapsData, epaData] = await Promise.all([
-        externalAPIService.getGSFCarbonData(location),
+      const [electricityMapsData, epaData] = await Promise.all([
         externalAPIService.getElectricityMapsData(zone),
         activityData.location?.postalCode ? 
           epaGridService.getEmissionFactorByPostalCode(activityData.location.postalCode) :
@@ -129,9 +128,7 @@ class SCIComplianceService {
 
       let marginalFactor = 415.755;
 
-      if (gsfData && gsfData.source === 'green_software_foundation') {
-        marginalFactor = gsfData.carbonIntensity;
-      } else if (electricityMapsData && electricityMapsData.source === 'real_time') {
+      if (electricityMapsData && electricityMapsData.source === 'real_time') {
         marginalFactor = electricityMapsData.carbonIntensity;
       } else if (epaData) {
         marginalFactor = epaData.emissionRate;
