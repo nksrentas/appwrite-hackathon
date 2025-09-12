@@ -28,6 +28,12 @@ export const COLLECTIONS = {
   USERS: 'users',
   ACTIVITIES: 'activities',
   CALCULATIONS: 'calculations',
+  LEADERBOARD: 'developer_leaderboard',
+  CHALLENGES: 'challenges',
+  CHALLENGE_PARTICIPANTS: 'challenge_participants',
+  USER_ACHIEVEMENTS: 'user_achievements',
+  TEAMS: 'teams',
+  PRIVACY_SETTINGS: 'privacy_settings',
   LEADERBOARDS: 'leaderboards',
   EMISSION_FACTORS: 'emission_factors',
 } as const;

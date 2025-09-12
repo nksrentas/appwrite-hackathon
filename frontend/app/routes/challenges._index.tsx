@@ -15,12 +15,20 @@ import {
   Award,
   TrendingUp,
   Play,
+  Users,
+  Settings,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
 import { Button } from '@shared/components/ui/button';
 import { Badge } from '@shared/components/ui/badge';
 import { Progress } from '@shared/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
+
+// Import new components
+import { ChallengeDiscovery } from '@features/leaderboard/components/challenge-discovery';
+import { TeamFormation } from '@features/leaderboard/components/team-formation';
+import { NotificationIntegration } from '@features/leaderboard/components/notification-integration';
 
 export const meta: MetaFunction = () => {
   return [
@@ -120,7 +128,14 @@ const achievements = [
 ];
 
 export default function Challenges() {
-  const [activeTab, setActiveTab] = useState<'challenges' | 'achievements'>('challenges');
+  const [activeTab, setActiveTab] = useState<'challenges' | 'teams' | 'notifications'>('challenges');
+
+  const mockCurrentUser = {
+    id: 'user1',
+    username: 'current-user',
+    name: 'Current User',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face',
+  };
 
   const getProgressColor = (progress: number, target: number) => {
     const percentage = (progress / target) * 100;
@@ -175,204 +190,122 @@ export default function Challenges() {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
               <h1 className="text-display-lg text-carbon-900 font-bold mb-2">
-                Challenges & Achievements
+                Challenges & Teams
               </h1>
               <p className="text-body-md text-carbon-600">
-                Take on challenges to reduce your carbon footprint and earn rewards
+                Join challenges, form teams, and collaborate to reduce your carbon footprint
               </p>
-            </div>
-
-            <div className="flex space-x-2 mt-4 md:mt-0">
-              <Button
-                variant={activeTab === 'challenges' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('challenges')}
-              >
-                <Target className="h-4 w-4 mr-2" />
-                Active Challenges
-              </Button>
-              <Button
-                variant={activeTab === 'achievements' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('achievements')}
-              >
-                <Trophy className="h-4 w-4 mr-2" />
-                Achievements
-              </Button>
             </div>
           </div>
         </motion.div>
 
-        {activeTab === 'challenges' && (
-          <div className="grid lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-3 space-y-6">
-              {challenges.map((challenge, index) => {
-                const Icon = challenge.icon;
-                const isLocked = challenge.status === 'locked';
-                const isCompleted = challenge.progress >= challenge.target;
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="challenges" className="flex items-center space-x-2">
+              <Target className="h-4 w-4" />
+              <span>Challenges</span>
+            </TabsTrigger>
+            <TabsTrigger value="teams" className="flex items-center space-x-2">
+              <Users className="h-4 w-4" />
+              <span>Teams</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4" />
+              <span>Notifications</span>
+            </TabsTrigger>
+          </TabsList>
 
-                return (
-                  <motion.div key={challenge.id} variants={itemVariants}>
-                    <Card className={`${isLocked ? 'opacity-60' : ''} ${isCompleted ? 'ring-2 ring-green-500' : ''}`}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-4">
-                            <div className={`p-3 rounded-lg bg-${challenge.color}-100`}>
-                              {isLocked ? (
-                                <Lock className="h-6 w-6 text-carbon-400" />
-                              ) : (
-                                <Icon className={`h-6 w-6 text-${challenge.color}-600`} />
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                                {isCompleted && (
-                                  <CheckCircle className="h-5 w-5 text-green-500" />
-                                )}
-                              </div>
-                              <p className="text-body-sm text-carbon-600">
-                                {challenge.description}
-                              </p>
-                              <div className="flex items-center space-x-2">
-                                <Badge className={getDifficultyColor(challenge.difficulty)}>
-                                  {challenge.difficulty}
-                                </Badge>
-                                <Badge variant="outline">{challenge.category}</Badge>
-                                <Badge variant="success">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  {challenge.reward} points
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
+          <TabsContent value="challenges" className="space-y-6">
+            <ChallengeDiscovery
+              currentUser={mockCurrentUser}
+              onJoinChallenge={(challengeId) => {
+                console.log('Joining challenge:', challengeId);
+              }}
+              onLeaveChallenge={(challengeId) => {
+                console.log('Leaving challenge:', challengeId);
+              }}
+              onCreateChallenge={(challenge) => {
+                console.log('Creating challenge:', challenge);
+              }}
+            />
+          </TabsContent>
 
-                          {!isLocked && !isCompleted && (
-                            <Button size="sm">
-                              <Play className="h-4 w-4 mr-2" />
-                              Start
-                            </Button>
-                          )}
-                          {isCompleted && (
-                            <Button size="sm" variant="outline" disabled>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Completed
-                            </Button>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {!isLocked ? (
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center text-body-sm">
-                              <span className="text-carbon-600">Progress</span>
-                              <span className="font-medium">
-                                {challenge.progress} / {challenge.target}
-                              </span>
-                            </div>
-                            <div className="relative">
-                              <div className="w-full bg-carbon-200 rounded-full h-2">
-                                <div 
-                                  className={`${getProgressColor(challenge.progress, challenge.target)} h-2 rounded-full transition-all duration-300`}
-                                  style={{ width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%` }}
-                                />
-                              </div>
-                            </div>
-                            {challenge.timeLeft && (
-                              <p className="text-caption text-carbon-500">{challenge.timeLeft}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <p className="text-body-sm text-carbon-500">
-                              <Lock className="h-4 w-4 inline mr-1" />
-                              {challenge.requirement}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+          <TabsContent value="teams" className="space-y-6">
+            <TeamFormation
+              currentUser={mockCurrentUser}
+              onCreateTeam={(team) => {
+                console.log('Creating team:', team);
+              }}
+              onJoinTeam={(teamId) => {
+                console.log('Joining team:', teamId);
+              }}
+              onLeaveTeam={(teamId) => {
+                console.log('Leaving team:', teamId);
+              }}
+              onInviteUser={(teamId, username) => {
+                console.log('Inviting user:', { teamId, username });
+              }}
+              onAcceptInvite={(inviteId) => {
+                console.log('Accepting invite:', inviteId);
+              }}
+              onDeclineInvite={(inviteId) => {
+                console.log('Declining invite:', inviteId);
+              }}
+            />
+          </TabsContent>
 
-            <div className="space-y-6">
-              <motion.div variants={itemVariants}>
+          <TabsContent value="notifications" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Star className="h-5 w-5 text-yellow-500" />
-                      <span>Your Points</span>
-                    </CardTitle>
+                    <CardTitle>Notification Center</CardTitle>
                   </CardHeader>
-                  <CardContent className="text-center space-y-4">
-                    <div className="text-4xl font-bold text-yellow-500">2,350</div>
-                    <p className="text-body-sm text-carbon-600">Total points earned</p>
-                    <Button className="w-full" size="sm">
-                      Redeem Rewards
+                  <CardContent>
+                    <NotificationIntegration
+                      userId={mockCurrentUser.id}
+                      onNotificationRead={(id) => {
+                        console.log('Marking notification as read:', id);
+                      }}
+                      onNotificationDismiss={(id) => {
+                        console.log('Dismissing notification:', id);
+                      }}
+                      onNavigateToAction={(url) => {
+                        console.log('Navigating to:', url);
+                      }}
+                      showFloatingNotifications={false}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Notification Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm text-carbon-600">
+                      Configure when and how you receive notifications about:
+                    </div>
+                    <ul className="text-sm text-carbon-600 space-y-2 list-disc list-inside ml-4">
+                      <li>Achievement unlocks</li>
+                      <li>Challenge invitations</li>
+                      <li>Team updates</li>
+                      <li>Rank changes</li>
+                      <li>Goal reminders</li>
+                      <li>Progress milestones</li>
+                    </ul>
+                    <Button variant="outline" className="w-full">
+                      Manage Settings
                     </Button>
                   </CardContent>
                 </Card>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Challenge Stats</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-body-sm text-carbon-600">Active</span>
-                      <span className="font-medium">3</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-body-sm text-carbon-600">Completed</span>
-                      <span className="font-medium text-green-600">8</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-body-sm text-carbon-600">Success Rate</span>
-                      <span className="font-medium">73%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-body-sm text-carbon-600">Streak</span>
-                      <span className="font-medium text-blue-600">5 days</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              </div>
             </div>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
 
-        {activeTab === 'achievements' && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {achievements.map((achievement, index) => {
-              const Icon = achievement.icon;
-              
-              return (
-                <motion.div key={achievement.id} variants={itemVariants}>
-                  <Card className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6 text-center space-y-4">
-                      <div className="bg-primary-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
-                        <Icon className="h-8 w-8 text-primary-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-carbon-900 mb-1">{achievement.title}</h3>
-                        <p className="text-body-sm text-carbon-600 mb-2">{achievement.description}</p>
-                        <Badge variant="success">
-                          <Star className="h-3 w-3 mr-1" />
-                          {achievement.reward} points
-                        </Badge>
-                      </div>
-                      <p className="text-caption text-carbon-500">
-                        Earned on {new Date(achievement.earnedAt).toLocaleDateString()}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
       </motion.div>
     </main>
   );

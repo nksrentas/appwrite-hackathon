@@ -13,6 +13,11 @@ import {
   Users,
   Crown,
   Star,
+  Settings,
+  Target,
+  Activity,
+  Zap,
+  BarChart3,
 } from 'lucide-react';
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
@@ -21,6 +26,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/
 import { Button } from '@shared/components/ui/button';
 import { Badge } from '@shared/components/ui/badge';
 import { Avatar } from '@shared/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@shared/components/ui/dialog';
+
+// Import new leaderboard components
+import { RealTimeLeaderboard } from '@features/leaderboard/components/real-time-leaderboard';
+import { AchievementGallery } from '@features/leaderboard/components/achievement-gallery';
+import { ProgressVisualization } from '@features/leaderboard/components/progress-visualization';
+import { PrivacyControls } from '@features/leaderboard/components/privacy-controls';
 
 export const meta: MetaFunction = () => {
   return [
@@ -93,6 +106,93 @@ export default function Leaderboard() {
   const { user } = useAuthStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState('month');
   const [selectedCategory, setSelectedCategory] = useState('overall');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'achievements' | 'progress' | 'settings'>('leaderboard');
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
+
+  // Mock achievements data for the gallery
+  const mockAchievements = [
+    {
+      id: 'efficiency-master',
+      name: 'Efficiency Master',
+      description: 'Maintain below 0.25kg CO₂ per commit for 30 days',
+      detailDescription: 'This achievement recognizes developers who consistently maintain excellent carbon efficiency in their development practices.',
+      icon: Zap,
+      category: 'efficiency' as const,
+      rarity: 'rare' as const,
+      points: 500,
+      unlockedAt: new Date('2024-01-15'),
+      unlockCriteria: {
+        type: 'efficiency_streak',
+        description: 'Maintain carbon efficiency below target for 30 consecutive days',
+        requirements: { threshold: 0.25, duration: 30, unit: 'days' }
+      },
+      shareableImage: '/achievements/efficiency-master.png'
+    },
+    {
+      id: 'green-streak',
+      name: 'Green Streak',
+      description: 'Complete 7 days of eco-friendly commits',
+      icon: Target,
+      category: 'improvement' as const,
+      rarity: 'uncommon' as const,
+      points: 250,
+      unlockedAt: new Date('2024-01-10'),
+      unlockCriteria: {
+        type: 'streak',
+        description: 'Maintain improvement streak for 7 days',
+        requirements: { duration: 7 }
+      }
+    },
+    {
+      id: 'team-player',
+      name: 'Team Player',
+      description: 'Complete 5 team challenges',
+      icon: Users,
+      category: 'community' as const,
+      rarity: 'common' as const,
+      points: 300,
+      unlockedAt: new Date('2024-01-20'),
+      unlockCriteria: {
+        type: 'team_challenges',
+        description: 'Successfully complete team challenges',
+        requirements: { count: 5 }
+      }
+    },
+    {
+      id: 'carbon-zero',
+      name: 'Carbon Zero Hero',
+      description: 'Achieve net-zero carbon impact for a full week',
+      icon: Award,
+      category: 'milestone' as const,
+      rarity: 'legendary' as const,
+      points: 1000,
+      progress: {
+        current: 4,
+        target: 7,
+        unit: 'days'
+      },
+      unlockCriteria: {
+        type: 'net_zero',
+        description: 'Maintain net-zero or negative carbon impact',
+        requirements: { duration: 7, threshold: 0 }
+      }
+    },
+    {
+      id: 'secret-achievement',
+      name: 'Hidden Achievement',
+      description: 'Complete the secret challenge',
+      icon: Crown,
+      category: 'special' as const,
+      rarity: 'epic' as const,
+      points: 750,
+      isSecret: true,
+      unlockCriteria: {
+        type: 'secret',
+        description: 'Discover and complete the hidden challenge',
+        requirements: { secret: true }
+      }
+    }
+  ];
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -156,218 +256,105 @@ export default function Leaderboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
               <h1 className="text-display-lg text-carbon-900 font-bold mb-2">
-                Carbon Efficiency Leaderboard
+                Developer Leaderboards
               </h1>
               <p className="text-body-md text-carbon-600">
-                See how you rank among developers committed to sustainable coding
+                Track progress, compete with peers, and celebrate sustainable coding achievements
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0">
-              <div className="flex space-x-2">
-                {timeRanges.map((range) => (
-                  <Button
-                    key={range.id}
-                    variant={selectedTimeRange === range.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedTimeRange(range.id)}
-                  >
-                    {range.label}
+            <div className="flex items-center space-x-3 mt-4 md:mt-0">
+              <Dialog open={showPrivacyDialog} onOpenChange={setShowPrivacyDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Privacy
                   </Button>
-                ))}
-              </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Privacy & Participation Settings</DialogTitle>
+                  </DialogHeader>
+                  <PrivacyControls
+                    onOptOut={() => {
+                      setShowPrivacyDialog(false);
+                      // Handle opt-out logic
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
-          </div>
-
-          <div className="flex space-x-2 mb-6">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                {category.label}
-              </Button>
-            ))}
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Trophy className="h-5 w-5 text-yellow-500" />
-                    <span>Top Performers</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {mockLeaderboardData.map((developer, index) => (
-                      <motion.div
-                        key={developer.id}
-                        variants={itemVariants}
-                        className="flex items-center space-x-4 p-4 bg-carbon-50 rounded-lg hover:bg-carbon-100 transition-colors"
-                      >
-                        <div className="flex items-center justify-center w-8">
-                          {getRankIcon(developer.rank)}
-                        </div>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="leaderboard" className="flex items-center space-x-2">
+              <Trophy className="h-4 w-4" />
+              <span>Rankings</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center space-x-2">
+              <Award className="h-4 w-4" />
+              <span>Achievements</span>
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="flex items-center space-x-2">
+              <BarChart3 className="h-4 w-4" />
+              <span>Progress</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center space-x-2">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </TabsTrigger>
+          </TabsList>
 
-                        <div className="flex items-center space-x-3 flex-1">
-                          <Avatar className="h-10 w-10">
-                            <img
-                              src={developer.avatar}
-                              alt={developer.name}
-                              className="h-full w-full object-cover rounded-full"
-                            />
-                          </Avatar>
+          <TabsContent value="leaderboard" className="space-y-6">
+            <RealTimeLeaderboard
+              context="global"
+              timeRange={selectedTimeRange as any}
+              showControls={true}
+              showUserPosition={true}
+              autoUpdate={true}
+            />
+          </TabsContent>
 
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <h3 className="font-semibold text-carbon-900">
-                                {developer.name}
-                              </h3>
-                              <span className="text-carbon-500 text-sm">
-                                @{developer.username}
-                              </span>
-                              {developer.achievements.length > 0 && (
-                                <div className="flex space-x-1">
-                                  {developer.achievements.slice(0, 2).map((achievement, i) => (
-                                    <Star
-                                      key={i}
-                                      className="h-4 w-4 text-yellow-500 fill-current"
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-caption text-carbon-500">
-                              {developer.totalContributions} contributions
-                            </p>
-                          </div>
-                        </div>
+          <TabsContent value="achievements" className="space-y-6">
+            <AchievementGallery
+              achievements={mockAchievements}
+              showProgress={true}
+              showSecrets={true}
+              enableUnlockAnimations={true}
+              onShare={(achievement) => {
+                // Handle achievement sharing
+                console.log('Sharing achievement:', achievement);
+              }}
+              onExport={() => {
+                // Handle collection export
+                console.log('Exporting achievement collection');
+              }}
+            />
+          </TabsContent>
 
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-carbon-900">
-                            {developer.carbonScore} kg CO₂
-                          </div>
-                          <div className="flex items-center space-x-1 text-caption">
-                            {getTrendIcon(developer.trend)}
-                            <span className={
-                              developer.trend === 'down' ? 'text-green-500' : 
-                              developer.trend === 'up' ? 'text-red-500' : 'text-carbon-400'
-                            }>
-                              {developer.trendChange}%
-                            </span>
-                          </div>
-                        </div>
+          <TabsContent value="progress" className="space-y-6">
+            <ProgressVisualization
+              userId={user?.id}
+              showComparison={true}
+              showPredictions={true}
+              timeRange={selectedTimeRange as any}
+              onTimeRangeChange={(range) => setSelectedTimeRange(range)}
+            />
+          </TabsContent>
 
-                        <div className="text-right">
-                          <div className={`text-caption font-medium ${getRankChangeColor(developer.rank, developer.previousRank)}`}>
-                            {developer.rank === developer.previousRank ? 
-                              '—' : 
-                              developer.rank < developer.previousRank ? 
-                                `↑${developer.previousRank - developer.rank}` : 
-                                `↓${developer.rank - developer.previousRank}`
-                            }
-                          </div>
-                          <div className="text-caption text-carbon-400">vs last week</div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+          <TabsContent value="settings" className="space-y-6">
+            <PrivacyControls
+              showOptOut={true}
+              onOptOut={() => {
+                // Handle complete opt-out
+                console.log('User opted out of leaderboards');
+              }}
+            />
+          </TabsContent>
+        </Tabs>
 
-          <div className="space-y-6">
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="h-5 w-5" />
-                    <span>Your Rank</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center space-y-4">
-                  <div className="text-4xl font-bold text-primary-500">#47</div>
-                  <p className="text-body-sm text-carbon-600">Out of 2,847 developers</p>
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-carbon-900">0.52 kg CO₂</div>
-                    <Badge variant="success">Top 25% Efficiency</Badge>
-                  </div>
-                  <Button className="w-full" size="sm">
-                    View My Profile
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Global Stats</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-body-sm text-carbon-600">Total Developers</span>
-                    <span className="font-medium">2,847</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-body-sm text-carbon-600">Average Efficiency</span>
-                    <span className="font-medium">0.68 kg CO₂</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-body-sm text-carbon-600">Total CO₂ Saved</span>
-                    <span className="font-medium text-green-600">1.2 tons</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-body-sm text-carbon-600">This Month</span>
-                    <span className="font-medium text-green-600">150 kg</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Achievement Goals</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-sm">Green Streak</span>
-                      <Badge variant="outline">12/30 days</Badge>
-                    </div>
-                    <div className="w-full bg-carbon-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: '40%' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-sm">Efficiency Master</span>
-                      <Badge variant="outline">3/5 weeks</Badge>
-                    </div>
-                    <div className="w-full bg-carbon-200 rounded-full h-2">
-                      <div 
-                        className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: '60%' }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </div>
       </motion.div>
     </main>
   );

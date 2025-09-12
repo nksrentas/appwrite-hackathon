@@ -334,6 +334,47 @@ export class CacheService {
     }
   }
 
+  async deletePattern(pattern: string): Promise<number> {
+    try {
+      logger.debug(`Deleting cache keys matching pattern: ${pattern}`);
+      
+      let deletedCount = 0;
+      
+      // For memory cache, we need to iterate through all keys
+      const memoryKeys = Array.from(this.memoryCache['cache'].keys());
+      
+      // Convert glob pattern to regex
+      const regexPattern = pattern
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.')
+        .replace(/\[/g, '\\[')
+        .replace(/\]/g, '\\]');
+      
+      const regex = new RegExp(`^${regexPattern}$`);
+      
+      for (const key of memoryKeys) {
+        if (regex.test(key)) {
+          this.memoryCache.delete(key);
+          deletedCount++;
+        }
+      }
+      
+      logger.debug(`Cache pattern delete completed`, {
+        metadata: { pattern, deletedCount }
+      });
+      
+      return deletedCount;
+    } catch (error) {
+      logger.error(`Cache pattern delete failed for pattern: ${pattern}`, {
+        error: { 
+          code: 'CACHE_PATTERN_DELETE_ERROR',
+          message: error instanceof Error ? error.message : 'Unknown error' 
+        }
+      });
+      return 0;
+    }
+  }
+
   async clear(): Promise<void> {
     try {
       this.memoryCache.clear();

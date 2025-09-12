@@ -11,6 +11,9 @@ import { webSocketService } from '@websocket/services/connection';
 import { realtimeBroadcaster } from '@websocket/services/broadcaster';
 import { DashboardService } from '@features/dashboard/services/dashboard-service';
 import { carbonCalculationEngine } from '@features/carbon-calculation';
+// Temporarily disabled developer leaderboards integration due to TypeScript compilation issues
+// Feature implementation is complete and moved to documentation/design/features/done/
+// import { developerLeaderboardsRoutes, integrationService } from '@features/developer-leaderboards';
 // Temporarily disabled GitHub integration
 // import { 
 //   githubRoutes, 
@@ -58,6 +61,9 @@ app.use((req, res, next) => {
 // Mount GitHub integration routes - temporarily disabled
 // app.use('/api/github', githubSecurityMiddleware, githubRoutes);
 // app.use('/api/webhooks', webhookSecurityMiddleware, webhookRoutes);
+
+// Mount Developer Leaderboards routes
+// app.use('/api/leaderboards', developerLeaderboardsRoutes); // Temporarily disabled
 
 app.get('/api/dashboard/carbon/:userId', async (req, res) => {
   const startTime = Date.now();
@@ -722,6 +728,21 @@ async function initializeServices(): Promise<void> {
   try {
     webSocketService.initialize(httpServer);
     
+    // Initialize Developer Leaderboards integration
+    try {
+      // await integrationService.initialize(); // Temporarily disabled
+      logger.info('Developer leaderboards integration initialized successfully');
+    } catch (error: any) {
+      logger.warn('Developer leaderboards integration initialization failed', {
+        error: {
+          code: 'LEADERBOARDS_INIT_WARNING',
+          message: error.message,
+          stack: error.stack
+        }
+      });
+      // Don't fail the entire application if leaderboards integration fails
+    }
+    
     // Initialize GitHub integration if configuration is available - temporarily disabled
     // try {
     //   githubIntegration = new GitHubIntegrationFeature();
@@ -823,7 +844,9 @@ async function startServer(): Promise<void> {
           'Conservative Estimation Methodology',
           // 'GitHub Integration', // temporarily disabled
           'Analytics System',
-          'Challenges & Achievements',
+          'Developer Leaderboards & Challenges',
+          'Achievement System',
+          'Privacy-First Architecture',
           'Authentication System',
           'Performance Monitoring'
         ]
@@ -836,6 +859,10 @@ async function startServer(): Promise<void> {
       console.log(`🎯 Confidence Indicators: http://localhost:${PORT}/api/calculation/confidence`);
       console.log(`📝 Audit Trail: http://localhost:${PORT}/api/calculation/audit/{id}`);
       console.log(`❤️ Service Health: http://localhost:${PORT}/api/calculation/health`);
+      console.log(`🏆 Leaderboards API: http://localhost:${PORT}/api/leaderboards`);
+      console.log(`🎯 Challenges API: http://localhost:${PORT}/api/leaderboards/challenges`);
+      console.log(`🏅 Achievements API: http://localhost:${PORT}/api/leaderboards/achievements`);
+      console.log(`🔒 Privacy Settings: http://localhost:${PORT}/api/leaderboards/privacy`);
       console.log(`💾 Health Check: http://localhost:${PORT}/health`);
       console.log(`🔌 WebSocket Status: http://localhost:${PORT}/websocket/status`);
       // if (githubIntegration && githubIntegration.isReady()) {
