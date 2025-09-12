@@ -35,10 +35,10 @@ export interface PatternTimeframe {
 }
 
 export interface DataQuality {
-  completeness: number; // 0-1
-  consistency: number; // 0-1
-  recency: number; // 0-1
-  overallScore: number; // 0-1
+  completeness: number;
+  consistency: number;
+  recency: number;
+  overallScore: number;
 }
 
 export interface BuildFrequencyPattern {
@@ -73,15 +73,15 @@ export interface PeakHoursPattern {
 }
 
 export interface HourRange {
-  start: number; // 0-23
-  end: number; // 0-23
-  intensity: number; // 0-1
-  carbonEfficiency: number; // lower is better
+  start: number;
+  end: number;
+  intensity: number;
+  carbonEfficiency: number;
 }
 
 export interface DayOfWeekPattern {
   day: string;
-  activityLevel: number; // 0-1
+  activityLevel: number;
   averageHours: number;
   carbonIntensity: number;
 }
@@ -91,20 +91,20 @@ export interface ToolUsagePattern {
   languageDistribution: Record<string, number>;
   frameworkUsage: Record<string, number>;
   cicdPatterns: CICDPattern[];
-  localVsRemoteRatio: number; // 0-1, 0 = all local, 1 = all remote
+  localVsRemoteRatio: number;
 }
 
 export interface ToolUsage {
   toolName: string;
   usageHours: number;
   carbonFootprintPerHour: number;
-  efficiencyScore: number; // 0-1
+  efficiencyScore: number;
   alternatives: ToolAlternative[];
 }
 
 export interface ToolAlternative {
   name: string;
-  carbonReduction: number; // percentage
+  carbonReduction: number;
   effortToSwitch: ImplementationComplexity;
   featureComparison: string;
 }
@@ -120,30 +120,30 @@ export interface CICDPattern {
 
 export interface GeographicPattern {
   location: GeoLocation;
-  timeSpent: number; // hours
+  timeSpent: number;
   carbonIntensityDuringWork: number;
   travelPatterns: TravelPattern[];
-  remoteWorkEfficiency: number; // 0-1
+  remoteWorkEfficiency: number;
 }
 
 export interface TravelPattern {
   fromLocation: GeoLocation;
   toLocation: GeoLocation;
-  frequency: string; // daily, weekly, monthly
+  frequency: string;
   transportMethod: string;
   workPatternChanges: WorkPatternChange[];
 }
 
 export interface WorkPatternChange {
   metric: string;
-  change: number; // percentage change
+  change: number;
   carbonImpact: number;
 }
 
 export interface HighCarbonPattern {
   pattern: PatternSignature;
-  carbonFootprint: number; // kg CO2e
-  frequency: number; // occurrences per week
+  carbonFootprint: number;
+  frequency: number;
   context: PatternContext;
   optimizationOpportunities: OptimizationOpportunity[];
 }
@@ -152,21 +152,21 @@ export interface PatternSignature {
   type: string;
   description: string;
   triggers: string[];
-  duration: number; // minutes
-  complexity: number; // 1-10
+  duration: number;
+  complexity: number;
 }
 
 export interface PatternContext {
-  timeOfDay: number[]; // hours when this pattern occurs
+  timeOfDay: number[];
   dayOfWeek: string[];
   gridCarbonIntensity: number;
-  userProductivity: number; // 0-1
+  userProductivity: number;
   teamCollaboration: boolean;
 }
 
 export interface OptimizationOpportunity {
   description: string;
-  expectedReduction: number; // percentage
+  expectedReduction: number;
   implementationEffort: ImplementationComplexity;
   riskLevel: 'low' | 'medium' | 'high';
   dependencies: string[];
@@ -174,38 +174,38 @@ export interface OptimizationOpportunity {
 
 export interface WorkingHabitPattern {
   focusTimePatterns: FocusTimePattern[];
-  interruptionFrequency: number; // per hour
-  multitaskingRatio: number; // 0-1
+  interruptionFrequency: number;
+  multitaskingRatio: number;
   deepWorkSessions: DeepWorkSession[];
   energyLevels: EnergyLevelPattern[];
 }
 
 export interface FocusTimePattern {
   timeRange: HourRange;
-  averageDuration: number; // minutes
-  productivityScore: number; // 0-1
-  carbonEfficiency: number; // 0-1
+  averageDuration: number;
+  productivityScore: number;
+  carbonEfficiency: number;
 }
 
 export interface DeepWorkSession {
-  averageDuration: number; // minutes
-  frequency: number; // per day
+  averageDuration: number;
+  frequency: number;
   carbonFootprintPerMinute: number;
-  qualityScore: number; // 0-1
+  qualityScore: number;
 }
 
 export interface EnergyLevelPattern {
   timeRange: HourRange;
-  energyLevel: number; // 0-1
-  correlationWithCarbonEfficiency: number; // -1 to 1
+  energyLevel: number;
+  correlationWithCarbonEfficiency: number;
 }
 
 export interface CollaborationPattern {
-  meetingFrequency: number; // per day
-  averageMeetingDuration: number; // minutes
-  remoteVsInPersonRatio: number; // 0-1
-  pairProgrammingHours: number; // per week
-  asyncCommunicationRatio: number; // 0-1
+  meetingFrequency: number;
+  averageMeetingDuration: number;
+  remoteVsInPersonRatio: number;
+  pairProgrammingHours: number;
+  asyncCommunicationRatio: number;
   teamSizePreference: number;
 }
 
@@ -214,8 +214,8 @@ export interface Activity {
   userId: string;
   type: ActivityType;
   timestamp: Date;
-  duration: number; // minutes
-  carbonFootprint: number; // kg CO2e
+  duration: number;
+  carbonFootprint: number;
   location: GeoLocation;
   metadata: ActivityMetadata;
 }
@@ -252,13 +252,13 @@ export interface BuildMetadata {
 export interface CodeMetadata {
   linesChanged: number;
   filesModified: number;
-  complexity: number; // cyclomatic complexity
-  testCoverage: number; // percentage
+  complexity: number;
+  testCoverage: number;
 }
 
 export interface ResourceUsage {
-  cpu: number; // percentage
-  memory: number; // MB
-  storage: number; // MB
-  network: number; // MB
+  cpu: number;
+  memory: number;
+  storage: number;
+  network: number;
 }

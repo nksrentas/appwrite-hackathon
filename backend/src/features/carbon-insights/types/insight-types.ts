@@ -79,4 +79,3 @@ export interface TemporalRelevance {
   gridIntensityPattern: boolean;
 }
 
-// GeoLocation is imported from pattern-types to avoid duplication

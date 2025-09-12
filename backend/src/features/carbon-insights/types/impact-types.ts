@@ -6,16 +6,16 @@ export interface ImpactMeasurement {
   insightId: string;
   userId: string;
   implementationDate: Date;
-  baselineCarbon: number; // kg CO2e
-  actualReduction: number; // kg CO2e
+  baselineCarbon: number;
+  actualReduction: number;
   productivityImpact: ProductivityImpact;
   userSatisfaction: UserSatisfaction;
   status: ImplementationStatus;
-  timeToImplement: number; // hours
+  timeToImplement: number;
   implementationNotes: string;
   rollbackDate?: Date;
   measuredAt: Date;
-  confidence: number; // 0-1
+  confidence: number;
   metadata: ImpactMetadata;
 }
 
@@ -27,12 +27,12 @@ export type ImplementationStatus =
   | 'measuring';
 
 export interface ProductivityImpact {
-  overallChange: number; // percentage change
-  buildTimeChange: number; // percentage change
-  debugTimeChange: number; // percentage change
-  codeQualityChange: number; // percentage change
-  teamCollaborationChange: number; // percentage change
-  developerSatisfactionChange: number; // percentage change
+  overallChange: number;
+  buildTimeChange: number;
+  debugTimeChange: number;
+  codeQualityChange: number;
+  teamCollaborationChange: number;
+  developerSatisfactionChange: number;
   metrics: ProductivityMetric[];
 }
 
@@ -46,10 +46,10 @@ export interface ProductivityMetric {
 }
 
 export interface UserSatisfaction {
-  overallRating: number; // 1-5
-  easeOfImplementation: number; // 1-5
-  effectivenessRating: number; // 1-5
-  willingnessToRecommend: number; // 1-5
+  overallRating: number;
+  easeOfImplementation: number;
+  effectivenessRating: number;
+  willingnessToRecommend: number;
   feedback: UserFeedback;
   surveyDate: Date;
 }
@@ -65,7 +65,7 @@ export interface UserFeedback {
 export interface ImpactMetadata {
   measurementPeriod: MeasurementPeriod;
   comparisonMethod: string;
-  statisticalSignificance: number; // p-value
+  statisticalSignificance: number;
   confoundingFactors: string[];
   dataQuality: DataQuality;
   externalFactors: ExternalFactor[];
@@ -83,7 +83,7 @@ export interface ExternalFactor {
   name: string;
   description: string;
   impact: 'positive' | 'negative' | 'neutral';
-  magnitude: number; // 0-1
+  magnitude: number;
 }
 
 export interface Baseline {
@@ -91,21 +91,21 @@ export interface Baseline {
   userId: string;
   insightId: string;
   period: MeasurementPeriod;
-  averageCarbon: number; // kg CO2e per day
-  averageProductivity: number; // tasks completed per day
+  averageCarbon: number;
+  averageProductivity: number;
   activityPatterns: BaselineActivityPattern[];
   implementationDate: Date;
-  expectedReduction: number; // kg CO2e
-  confidence: number; // 0-1
+  expectedReduction: number;
+  confidence: number;
   createdAt: Date;
 }
 
 export interface BaselineActivityPattern {
   activityType: string;
-  frequency: number; // per day
-  averageDuration: number; // minutes
-  averageCarbonFootprint: number; // kg CO2e
-  consistency: number; // 0-1
+  frequency: number;
+  averageDuration: number;
+  averageCarbonFootprint: number;
+  consistency: number;
 }
 
 export interface ImpactReport {
@@ -113,8 +113,8 @@ export interface ImpactReport {
   userId: string;
   reportPeriod: MeasurementPeriod;
   totalInsightsImplemented: number;
-  totalCarbonReduction: number; // kg CO2e
-  totalProductivityGain: number; // percentage
+  totalCarbonReduction: number;
+  totalProductivityGain: number;
   topInsights: TopInsight[];
   trends: ImpactTrend[];
   recommendations: FutureRecommendation[];
@@ -125,18 +125,18 @@ export interface ImpactReport {
 export interface TopInsight {
   insightId: string;
   title: string;
-  carbonReduction: number; // kg CO2e
-  productivityImpact: number; // percentage
-  implementationEffort: number; // hours
-  roi: number; // carbon reduction per hour of effort
-  userSatisfaction: number; // 1-5
+  carbonReduction: number;
+  productivityImpact: number;
+  implementationEffort: number;
+  roi: number;
+  userSatisfaction: number;
 }
 
 export interface ImpactTrend {
   metric: string;
   direction: 'improving' | 'declining' | 'stable';
-  rate: number; // percentage change per month
-  confidence: number; // 0-1
+  rate: number;
+  confidence: number;
   projectedNextMonth: number;
 }
 
@@ -144,24 +144,24 @@ export interface FutureRecommendation {
   type: string;
   description: string;
   expectedBenefit: number;
-  confidence: number; // 0-1
+  confidence: number;
   timeframe: string;
 }
 
 export interface ImpactSummary {
-  totalCarbonSaved: number; // kg CO2e
-  equivalentTrees: number; // trees that would need to be planted
-  equivalentCars: number; // cars taken off road for a day
-  monetaryValue: number; // USD equivalent
+  totalCarbonSaved: number;
+  equivalentTrees: number;
+  equivalentCars: number;
+  monetaryValue: number;
   rank: UserRank;
   achievements: Achievement[];
 }
 
 export interface UserRank {
-  percentile: number; // 0-100
+  percentile: number;
   category: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   pointsToNextLevel: number;
-  currentStreak: number; // days of consistent optimization
+  currentStreak: number;
 }
 
 export interface Achievement {
@@ -192,7 +192,7 @@ export interface TrainingExample {
   success: boolean;
   features: number[];
   label: number;
-  weight: number; // for training importance
+  weight: number;
 }
 
 export interface UserProfile {
@@ -212,23 +212,23 @@ export interface UserProfile {
 }
 
 export interface SustainabilityGoals {
-  annualReductionTarget: number; // kg CO2e
-  monthlyReductionTarget: number; // kg CO2e
+  annualReductionTarget: number;
+  monthlyReductionTarget: number;
   priorities: SustainabilityPriority[];
   tradeOffTolerance: TradeOffTolerance;
 }
 
 export interface SustainabilityPriority {
   category: string;
-  importance: number; // 1-5
-  currentPerformance: number; // 1-5
-  improvementGoal: number; // percentage
+  importance: number;
+  currentPerformance: number;
+  improvementGoal: number;
 }
 
 export interface TradeOffTolerance {
-  productivityForCarbon: number; // 0-1, willingness to sacrifice productivity
-  convenienceForCarbon: number; // 0-1, willingness to sacrifice convenience
-  costForCarbon: number; // 0-1, willingness to pay more for lower carbon
+  productivityForCarbon: number;
+  convenienceForCarbon: number;
+  costForCarbon: number;
 }
 
 export interface UserPreferences {
@@ -242,7 +242,7 @@ export interface UserPreferences {
 export interface GeographicContext {
   currentLocation: GeoLocation;
   gridRegion: string;
-  currentCarbonIntensity: number; // gCO2/kWh
+  currentCarbonIntensity: number;
   forecast24h: CarbonIntensityForecast[];
   renewableEnergyPercentage: number;
   timeOfDayFactors: TimeOfDayFactor[];
@@ -252,28 +252,28 @@ export interface GeographicContext {
 
 export interface CarbonIntensityForecast {
   timestamp: Date;
-  intensity: number; // gCO2/kWh
-  confidence: number; // 0-1
+  intensity: number;
+  confidence: number;
   renewablePercentage: number;
 }
 
 export interface TimeOfDayFactor {
-  hour: number; // 0-23
-  factor: number; // multiplier for carbon intensity
-  renewableAvailability: number; // 0-1
+  hour: number;
+  factor: number;
+  renewableAvailability: number;
 }
 
 export interface SeasonalFactor {
-  month: number; // 1-12
-  factor: number; // multiplier for carbon intensity
-  renewableAvailability: number; // 0-1
+  month: number;
+  factor: number;
+  renewableAvailability: number;
 }
 
 export interface DataCenter {
   name: string;
   location: GeoLocation;
-  distance: number; // km
-  pue: number; // Power Usage Effectiveness
+  distance: number;
+  pue: number;
   renewablePercentage: number;
-  latency: number; // ms
+  latency: number;
 }
