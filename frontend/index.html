@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EcoTrace - Developer Carbon Footprint Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 2rem 0;
+        }
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .feature h3 {
+            margin: 0 0 10px 0;
+            color: #a8ff78;
+        }
+        .cta {
+            margin-top: 2rem;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 EcoTrace</h1>
+        <p>Real-time carbon footprint tracking for developers</p>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>📊 Real-time Tracking</h3>
+                <p>Live carbon footprint monitoring as you code</p>
+            </div>
+            <div class="feature">
+                <h3>🔗 GitHub Integration</h3>
+                <p>Automatic tracking via webhooks</p>
+            </div>
+            <div class="feature">
+                <h3>🏆 Leaderboards</h3>
+                <p>Community rankings for sustainability</p>
+            </div>
+        </div>
+
+        <div class="cta">
+            <a href="https://fra.cloud.appwrite.io/v1/storage/buckets/ecotrace-site/files/build-assets/download?project=68bf3f5e00183c7886b0" class="btn">
+                📦 Download Full Application
+            </a>
+        </div>
+
+        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+            <p>This is a static preview. The full React application with dashboard, analytics, and GitHub integration is available in the build assets.</p>
+        </div>
+    </div>
+</body>
+</html>

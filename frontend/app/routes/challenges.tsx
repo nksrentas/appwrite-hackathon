@@ -12,6 +12,7 @@ import {
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
 import { Button } from '@shared/components/ui/button';
+import { Separator } from '@shared/components/ui/separator';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return json({});
@@ -39,38 +40,44 @@ export default function ChallengesLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-carbon-50 via-primary-50/20 to-background">
-      <header className="border-b border-carbon-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-background/95 backdrop-blur-supports-[backdrop-filter]:bg-background/95 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <Link to="/" className="flex items-center space-x-3">
-                <div className="bg-primary-500 p-2 rounded-lg carbon-glow">
-                  <Leaf className="h-6 w-6 text-white" />
+                <div className="bg-primary p-2 rounded-lg">
+                  <Leaf className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <span className="text-display-md text-carbon-900 font-bold">EcoTrace</span>
+                <span className="text-display-md font-bold">EcoTrace</span>
               </Link>
 
               <nav className="hidden md:flex space-x-6">
                 <Link
                   to="/dashboard"
-                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Dashboard
                 </Link>
                 <Link
+                  to="/carbon-insights"
+                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Carbon Insights
+                </Link>
+                <Link
                   to="/analytics"
-                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Analytics
                 </Link>
                 <Link
                   to="/leaderboard"
-                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Leaderboard
                 </Link>
-                <span className="text-body-md text-primary-600 font-medium border-b-2 border-primary-500 pb-1">
+                <span className="text-body-md text-primary font-medium border-b-2 border-primary pb-1">
                   Challenges
                 </span>
               </nav>
@@ -96,18 +103,23 @@ export default function ChallengesLayout() {
                 <Settings className="h-4 w-4" />
               </Button>
 
+              <Separator orientation="vertical" className="h-6" />
+              
               {user && (
-                <div className="flex items-center space-x-3 pl-4 border-l border-carbon-200">
+                <div className="flex items-center space-x-3">
                   <div className="text-right">
-                    <div className="text-body-sm font-medium text-carbon-900">
+                    <div className="text-body-sm font-medium">
                       {user.name || 'Developer'}
+                    </div>
+                    <div className="text-caption text-muted-foreground">
+                      @{(user as any).githubUsername || 'username'}
                     </div>
                   </div>
                   {(user as any).avatar && (
                     <img
                       src={(user as any).avatar}
                       alt="Profile"
-                      className="h-8 w-8 rounded-full ring-2 ring-primary-500/20"
+                      className="h-8 w-8 rounded-full ring-2 ring-primary/20"
                     />
                   )}
                 </div>

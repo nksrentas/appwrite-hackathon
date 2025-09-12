@@ -100,16 +100,16 @@ export default function CarbonInsightsLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-carbon-50 via-primary-50/20 to-background">
-      <header className="border-b border-carbon-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-background/95 backdrop-blur-supports-[backdrop-filter]:bg-background/95 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
               <Link to="/" className="flex items-center space-x-3">
-                <div className="bg-primary-500 p-2 rounded-lg carbon-glow">
-                  <Leaf className="h-6 w-6 text-white" />
+                <div className="bg-primary p-2 rounded-lg">
+                  <Leaf className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <span className="text-display-md text-carbon-900 font-bold">EcoTrace</span>
+                <span className="text-display-md font-bold">EcoTrace</span>
               </Link>
 
               <nav className="hidden md:flex space-x-6">
