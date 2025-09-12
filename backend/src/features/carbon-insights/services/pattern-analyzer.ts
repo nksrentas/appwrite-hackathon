@@ -88,12 +88,11 @@ export class PatternAnalyzerService {
       };
 
       // Cache for 2 hours
-      await this.cache.set(cacheKey, pattern, 7200);
+      await this.cache.set(cacheKey, pattern, { ttl: 7200 });
 
       logger.info('Pattern analysis completed', { 
         userId, 
-        activitiesAnalyzed: activities.length,
-        highCarbonPatterns: carbonIntensivePatterns.length 
+ 
       });
 
       return pattern;
@@ -258,6 +257,7 @@ export class PatternAnalyzerService {
     return {
       primaryTools,
       languageDistribution,
+      frameworkUsage: frameworkDistribution,
       frameworkDistribution,
       cicdPatterns,
       localVsRemoteRatio
@@ -454,6 +454,7 @@ export class PatternAnalyzerService {
       toolUsage: {
         primaryTools: [],
         languageDistribution: {},
+        frameworkUsage: {},
         frameworkDistribution: {},
         cicdPatterns: [],
         localVsRemoteRatio: 0.5

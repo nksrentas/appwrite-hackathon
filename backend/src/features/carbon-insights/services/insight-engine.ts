@@ -7,7 +7,9 @@ import {
   InsightType,
   ImplementationComplexity,
   InsightPriority,
-  ImplementationStatus
+  ImplementationStatus,
+  ImplementationStep,
+  StepType
 } from '../types';
 import { PatternAnalyzerService } from './pattern-analyzer';
 import { GeographicOptimizerService } from './geographic-optimizer';
@@ -84,12 +86,11 @@ export class InsightEngineService {
       const rankedInsights = this.rankAndFilterInsights(allInsights, userProfile);
       
       // Cache results for 1 hour
-      await this.cache.set(cacheKey, rankedInsights, 3600);
+      await this.cache.set(cacheKey, rankedInsights, { ttl: 3600 });
 
       logger.info('Generated insights for user', { 
         userId, 
-        totalGenerated: allInsights.length,
-        finalCount: rankedInsights.length 
+ 
       });
 
       return rankedInsights;
@@ -296,13 +297,13 @@ export class InsightEngineService {
   /**
    * Generate implementation instructions for timing optimization
    */
-  private generateTimingInstructions(window: any): string[] {
+  private generateTimingInstructions(window: any): ImplementationStep[] {
     return [
       {
         id: 'timing-1',
         title: 'Review current build schedule',
         description: 'Identify builds that can be delayed to low-carbon windows',
-        type: 'configuration',
+        type: 'configuration' as StepType,
         estimatedTime: 10,
         isOptional: false
       },
@@ -310,7 +311,7 @@ export class InsightEngineService {
         id: 'timing-2',
         title: 'Configure CI/CD scheduling',
         description: 'Set up scheduled builds during optimal time windows',
-        type: 'configuration',
+        type: 'configuration' as StepType,
         estimatedTime: 20,
         isOptional: false,
         code: {
@@ -326,13 +327,13 @@ export class InsightEngineService {
   /**
    * Generate implementation instructions for tooling optimization
    */
-  private generateToolingInstructions(currentTool: any, alternative: any): string[] {
+  private generateToolingInstructions(currentTool: any, alternative: any): ImplementationStep[] {
     return [
       {
         id: 'tool-1',
         title: 'Backup current configuration',
         description: `Export ${currentTool.toolName} settings and configurations`,
-        type: 'configuration',
+        type: 'configuration' as StepType,
         estimatedTime: 10,
         isOptional: false
       },
@@ -340,7 +341,7 @@ export class InsightEngineService {
         id: 'tool-2',
         title: `Install ${alternative.name}`,
         description: `Download and install ${alternative.name}`,
-        type: 'tool-installation',
+        type: 'tool-installation' as StepType,
         estimatedTime: 15,
         isOptional: false
       },
@@ -348,7 +349,7 @@ export class InsightEngineService {
         id: 'tool-3',
         title: 'Migrate configuration',
         description: `Transfer settings from ${currentTool.toolName} to ${alternative.name}`,
-        type: 'configuration',
+        type: 'configuration' as StepType,
         estimatedTime: 30,
         isOptional: false
       }
@@ -447,7 +448,6 @@ export class InsightEngineService {
         latitude: 37.7749,
         longitude: -122.4194,
         city: 'San Francisco',
-        region: 'CA',
         country: 'US',
         timezone: 'America/Los_Angeles'
       },
@@ -501,7 +501,7 @@ export class InsightEngineService {
           id: 'cache-1',
           title: 'Analyze current cache usage',
           description: 'Review build logs to identify cache misses',
-          type: 'configuration',
+          type: 'configuration' as StepType,
           estimatedTime: 30,
           isOptional: false
         },
@@ -553,7 +553,7 @@ export class InsightEngineService {
           id: 'parallel-1',
           title: 'Enable parallel execution',
           description: 'Configure CI/CD for parallel job execution',
-          type: 'configuration',
+          type: 'configuration' as StepType,
           estimatedTime: 45,
           isOptional: false
         },
@@ -658,7 +658,7 @@ export class InsightEngineService {
           id: 'workflow-step-1',
           title: 'Analyze current workflow',
           description: `Review ${pattern.pattern.type} pattern`,
-          type: 'configuration',
+          type: 'configuration' as StepType,
           estimatedTime: 20,
           isOptional: false
         },

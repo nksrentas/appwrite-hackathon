@@ -52,8 +52,7 @@ export class ImpactTrackerService {
           
           logger.info('Impact measurement completed', { 
             userId, 
-            insightId, 
-            actualReduction: impact.actualReduction 
+            insightId
           });
         } catch (error) {
           logger.error('Failed to measure impact', { userId, insightId, error: error.message });
@@ -85,9 +84,9 @@ export class ImpactTrackerService {
       };
 
       const statusKey = `implementation-status:${insightId}`;
-      await this.cache.set(statusKey, statusUpdate, 86400 * 30); // Keep for 30 days
+      await this.cache.set(statusKey, statusUpdate, { ttl: 86400 * 30 }); // Keep for 30 days
 
-      logger.info('Implementation status recorded', { userId, insightId, status });
+      logger.info('Implementation status recorded', { userId, insightId });
 
       // If implementation is completed, start measuring impact
       if (status === 'implemented') {
@@ -170,8 +169,7 @@ export class ImpactTrackerService {
 
       logger.info('Impact report generated', { 
         userId, 
-        totalReduction: totalCarbonReduction,
-        implementedInsights: impactMeasurements.length 
+        count: impactMeasurements.length 
       });
 
       return report;
@@ -198,12 +196,11 @@ export class ImpactTrackerService {
         timestamp: new Date()
       };
 
-      await this.cache.set(feedbackKey, feedback, 86400 * 90); // Keep for 90 days
+      await this.cache.set(feedbackKey, feedback, { ttl: 86400 * 90 }); // Keep for 90 days
       
       logger.info('User feedback collected', { 
         userId, 
-        insightId, 
-        overallRating: satisfaction.overallRating 
+        insightId
       });
 
       // Update the impact measurement with user feedback
@@ -252,13 +249,11 @@ export class ImpactTrackerService {
 
     // Store baseline
     const baselineKey = `baseline:${insightId}`;
-    await this.cache.set(baselineKey, baseline, 86400 * 60); // Keep for 60 days
+    await this.cache.set(baselineKey, baseline, { ttl: 86400 * 60 }); // Keep for 60 days
 
     logger.info('Baseline established', { 
       userId, 
-      insightId, 
-      averageCarbon, 
-      expectedReduction: baseline.expectedReduction 
+      insightId
     });
 
     return baseline;
@@ -329,22 +324,20 @@ export class ImpactTrackerService {
 
   private async recordImpact(impact: ImpactMeasurement): Promise<void> {
     const impactKey = `impact:${impact.insightId}`;
-    await this.cache.set(impactKey, impact, 86400 * 90); // Keep for 90 days
+    await this.cache.set(impactKey, impact, { ttl: 86400 * 90 }); // Keep for 90 days
     
     // Also store in user's impact history
     const historyKey = `impact-history:${impact.userId}`;
     const history = (await this.cache.get(historyKey)) || [];
     history.push(impact);
-    await this.cache.set(historyKey, history, 86400 * 365); // Keep for 1 year
+    await this.cache.set(historyKey, history, { ttl: 86400 * 365 }); // Keep for 1 year
   }
 
   private async updateRecommendationModel(impact: ImpactMeasurement): Promise<void> {
     // This would integrate with the ML model to provide feedback
     // For now, just log the update
     logger.info('Updating recommendation model with impact data', {
-      insightId: impact.insightId,
-      actualReduction: impact.actualReduction,
-      success: impact.status === 'implemented'
+      insightId: impact.insightId
     });
   }
 
@@ -493,7 +486,7 @@ export class ImpactTrackerService {
     
     if (impact) {
       impact.userSatisfaction = satisfaction;
-      await this.cache.set(impactKey, impact, 86400 * 90);
+      await this.cache.set(impactKey, impact, { ttl: 86400 * 90 });
     }
   }
 

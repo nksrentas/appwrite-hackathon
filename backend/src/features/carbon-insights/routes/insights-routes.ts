@@ -10,7 +10,6 @@ router.use((req, res, next) => {
   logger.debug('Carbon insights API request', {
     method: req.method,
     path: req.path,
-    query: req.query,
     ip: req.ip,
     userAgent: req.get('User-Agent')
   });
@@ -46,11 +45,14 @@ router.get('/model/metrics', insightsController.getModelMetrics.bind(insightsCon
 // Error handling middleware
 router.use((error: Error, req: any, res: any, next: any) => {
   logger.error('Carbon insights API error', {
-    error: error.message,
-    stack: error.stack,
+    error: {
+      code: 'API_ERROR',
+      message: error.message,
+      stack: error.stack
+    },
     method: req.method,
     path: req.path,
-    body: req.body
+    metadata: { requestBody: req.body }
   });
 
   res.status(500).json({

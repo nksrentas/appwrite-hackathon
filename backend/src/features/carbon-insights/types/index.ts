@@ -6,5 +6,7 @@ export {
   ImplementationComplexity,
   InsightPriority,
   InsightStatus,
-  InsightMetadata
+  InsightMetadata,
+  ImplementationStep,
+  StepType
 } from './insight-types';

@@ -58,8 +58,11 @@ export class InsightsController {
     } catch (error) {
       logger.error('Failed to get insights', { 
         userId: req.params.userId,
-        error: error.message,
-        stack: error.stack
+        error: {
+          code: 'INSIGHTS_ERROR',
+          message: error.message,
+          stack: error.stack
+        }
       });
 
       res.status(500).json({
@@ -200,7 +203,7 @@ export class InsightsController {
         return;
       }
 
-      logger.info('Recording implementation status', { userId, insightId, status });
+      logger.info('Recording implementation status', { userId, insightId, metadata: { status } });
 
       await this.impactTracker.recordImplementationStatus(userId, insightId, status, notes);
 
@@ -217,8 +220,11 @@ export class InsightsController {
 
     } catch (error) {
       logger.error('Failed to record implementation', { 
-        body: req.body,
-        error: error.message
+        error: {
+          code: 'IMPLEMENTATION_RECORD_ERROR',
+          message: error.message
+        },
+        metadata: { requestBody: req.body }
       });
 
       res.status(500).json({
@@ -384,8 +390,11 @@ export class InsightsController {
 
     } catch (error) {
       logger.error('Failed to submit feedback', { 
-        body: req.body,
-        error: error.message
+        error: {
+          code: 'FEEDBACK_SUBMISSION_ERROR',
+          message: error.message
+        },
+        metadata: { requestBody: req.body }
       });
 
       res.status(500).json({

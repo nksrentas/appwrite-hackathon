@@ -146,10 +146,13 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted insights generated event', { 
         userId, 
-        insightCount: insights.length 
+        count: insights.length 
       });
     } catch (error) {
-      logger.error('Failed to emit insights generated event', { userId, error: error.message });
+      logger.error('Failed to emit insights generated event', { 
+        userId, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
+      });
     }
   }
 
@@ -171,7 +174,7 @@ export class CarbonInsightsWebSocketService {
       logger.error('Failed to emit implementation started event', { 
         userId, 
         insightId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -197,13 +200,13 @@ export class CarbonInsightsWebSocketService {
       logger.info('Emitted implementation completed event', { 
         userId, 
         insightId, 
-        success 
+        metadata: { success } 
       });
     } catch (error) {
       logger.error('Failed to emit implementation completed event', { 
         userId, 
         insightId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -229,13 +232,13 @@ export class CarbonInsightsWebSocketService {
       logger.info('Emitted impact measured event', { 
         userId, 
         insightId, 
-        actualReduction: impact.actualReduction 
+        metadata: { actualReduction: impact.actualReduction } 
       });
     } catch (error) {
       logger.error('Failed to emit impact measured event', { 
         userId, 
         insightId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -255,12 +258,12 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted geographic context update', { 
         userId, 
-        carbonIntensity: context.currentCarbonIntensity 
+        metadata: { carbonIntensity: context.currentCarbonIntensity } 
       });
     } catch (error) {
       logger.error('Failed to emit geographic context update', { 
         userId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -287,14 +290,13 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted grid alert', { 
         userId, 
-        alertType, 
-        intensity 
+        metadata: { alertType, intensity } 
       });
     } catch (error) {
       logger.error('Failed to emit grid alert', { 
         userId, 
-        alertType, 
-        error: error.message 
+        metadata: { alertType }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -321,12 +323,12 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted patterns analyzed event', { 
         userId, 
-        buildFrequency: summary.buildFrequency 
+        metadata: { buildFrequency: summary.buildFrequency } 
       });
     } catch (error) {
       logger.error('Failed to emit patterns analyzed event', { 
         userId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -355,13 +357,13 @@ export class CarbonInsightsWebSocketService {
         userId, 
         insightId, 
         type,
-        confidence 
+        metadata: { confidence } 
       });
     } catch (error) {
       logger.error('Failed to emit ML recommendation generated event', { 
         userId, 
         insightId, 
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -389,14 +391,14 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted achievement unlocked event', { 
         userId, 
-        achievementId: achievement.id,
-        achievementName: achievement.name 
+        name: achievement.name, 
+        metadata: { achievementId: achievement.id } 
       });
     } catch (error) {
       logger.error('Failed to emit achievement unlocked event', { 
         userId, 
-        achievementId: achievement.id,
-        error: error.message 
+        metadata: { achievementId: achievement.id }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -423,14 +425,13 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted milestone reached event', { 
         userId, 
-        milestoneType: milestone.type,
-        value: milestone.value 
+        metadata: { milestoneType: milestone.type, value: milestone.value } 
       });
     } catch (error) {
       logger.error('Failed to emit milestone reached event', { 
         userId, 
-        milestone: milestone.type,
-        error: error.message 
+        metadata: { milestone: milestone.type }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -459,14 +460,13 @@ export class CarbonInsightsWebSocketService {
       
       logger.info('Emitted impact report generated event', { 
         userId, 
-        reportId,
-        totalReduction: summary.totalReduction 
+        metadata: { reportId, totalReduction: summary.totalReduction } 
       });
     } catch (error) {
       logger.error('Failed to emit impact report generated event', { 
         userId, 
-        reportId,
-        error: error.message 
+        metadata: { reportId }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -494,14 +494,13 @@ export class CarbonInsightsWebSocketService {
       logger.info('Emitted model feedback received event', { 
         userId, 
         insightId,
-        rating,
-        modelUpdated 
+        metadata: { rating, modelUpdated } 
       });
     } catch (error) {
       logger.error('Failed to emit model feedback received event', { 
         userId, 
         insightId,
-        error: error.message 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }
@@ -524,7 +523,7 @@ export class CarbonInsightsWebSocketService {
       logger.error('Failed to broadcast WebSocket event', {
         channel,
         event,
-        error: error.message
+        error: { code: 'WEBSOCKET_BROADCAST_ERROR', message: error.message }
       });
       throw error;
     }
@@ -541,12 +540,12 @@ export class CarbonInsightsWebSocketService {
 
       await this.broadcaster.subscribe(socketId, `user:${userId}`);
       
-      logger.info('Subscribed to carbon insights events', { userId, socketId });
+      logger.info('Subscribed to carbon insights events', { userId, metadata: { socketId } });
     } catch (error) {
       logger.error('Failed to subscribe to insights events', { 
         userId, 
-        socketId, 
-        error: error.message 
+        metadata: { socketId }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
       throw error;
     }
@@ -563,12 +562,12 @@ export class CarbonInsightsWebSocketService {
 
       await this.broadcaster.unsubscribe(socketId, `user:${userId}`);
       
-      logger.info('Unsubscribed from carbon insights events', { userId, socketId });
+      logger.info('Unsubscribed from carbon insights events', { userId, metadata: { socketId } });
     } catch (error) {
       logger.error('Failed to unsubscribe from insights events', { 
         userId, 
-        socketId, 
-        error: error.message 
+        metadata: { socketId }, 
+        error: { code: 'WEBSOCKET_ERROR', message: error.message } 
       });
     }
   }

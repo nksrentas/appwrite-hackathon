@@ -7,16 +7,16 @@ import {
   TimeOfDayFactor,
   DataCenter
 } from '../types';
-import { ExternalAPIIntegrations } from '@features/carbon-calculation';
+import { externalAPIService } from '@features/carbon-calculation';
 import { CacheService } from '@shared/utils/cache';
 
 export class GeographicOptimizerService {
   private static instance: GeographicOptimizerService;
-  private externalAPIs: ExternalAPIIntegrations;
+  private externalAPIs: typeof externalAPIService;
   private cache: CacheService;
 
   private constructor() {
-    this.externalAPIs = ExternalAPIIntegrations.getInstance();
+    this.externalAPIs = externalAPIService;
     this.cache = new CacheService();
   }
 
@@ -57,8 +57,9 @@ export class GeographicOptimizerService {
 
       logger.info('Geographic context retrieved', { 
         userId, 
-        gridRegion: context.gridRegion,
-        currentIntensity: context.currentCarbonIntensity 
+        metadata: {
+          currentIntensity: context.currentCarbonIntensity 
+        }
       });
 
       return context;
@@ -90,7 +91,9 @@ export class GeographicOptimizerService {
 
       logger.info('Location insights generated', { 
         userId, 
-        totalInsights: insights.length 
+        metadata: {
+          insightCount: insights.length 
+        }
       });
 
       return insights;
@@ -318,10 +321,10 @@ export class GeographicOptimizerService {
         timestamp: new Date()
       };
 
-      await this.cache.set(cacheKey, gridData, 300); // Cache for 5 minutes
+      await this.cache.set(cacheKey, gridData, { ttl: 300000 }); // Cache for 5 minutes
       return gridData;
     } catch (error) {
-      logger.error('Failed to get grid data', { location, error: error.message });
+      logger.error('Failed to get grid data', { error: error.message });
       return { carbonIntensity: 300, renewablePercentage: 50, timestamp: new Date() };
     }
   }

@@ -52,8 +52,8 @@ export class RecommendationModelService {
       const insights = this.convertPredictionsToInsights(predictions, userProfile);
       
       logger.info('ML recommendations generated', { 
-        userId: userProfile.userId, 
-        insights: insights.length 
+        userId: userProfile.userId,
+        count: insights.length 
       });
 
       return insights;
@@ -77,7 +77,7 @@ export class RecommendationModelService {
 
     try {
       this.isTraining = true;
-      logger.info('Starting model training', { examples: trainingData.length });
+      logger.info('Starting model training', { count: trainingData.length });
 
       // Simple gradient descent-like weight adjustment
       for (const example of trainingData) {
@@ -108,9 +108,7 @@ export class RecommendationModelService {
     try {
       logger.info('Updating model from feedback', { 
         userId, 
-        insightId, 
-        implemented, 
-        effectiveness 
+        insightId 
       });
 
       // Store feedback for next training cycle
@@ -121,7 +119,7 @@ export class RecommendationModelService {
         implemented,
         effectiveness,
         timestamp: new Date()
-      }, 86400 * 30); // Keep for 30 days
+      }, { ttl: 86400 * 30 }); // Keep for 30 days
 
       // Immediate model adjustment for successful implementations
       if (implemented && effectiveness > 0.7) {
@@ -351,7 +349,7 @@ export class RecommendationModelService {
       this.modelWeights.set(feature, weight + reinforcementFactor);
     }
 
-    logger.info('Model weights reinforced', { insightId, effectiveness });
+    logger.info('Model weights reinforced', { insightId });
   }
 
   private estimateImplementationTime(

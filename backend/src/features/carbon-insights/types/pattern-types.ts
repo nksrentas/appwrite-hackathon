@@ -9,6 +9,7 @@ export interface GeoLocation {
   latitude: number;
   longitude: number;
   city?: string;
+  region?: string;
   country?: string;
   timezone?: string;
   gridRegion?: string;
@@ -90,6 +91,7 @@ export interface ToolUsagePattern {
   primaryTools: ToolUsage[];
   languageDistribution: Record<string, number>;
   frameworkUsage: Record<string, number>;
+  frameworkDistribution: Record<string, number>;
   cicdPatterns: CICDPattern[];
   localVsRemoteRatio: number;
 }
