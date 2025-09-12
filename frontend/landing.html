@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrace - Developer Carbon Footprint Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            color: white;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            opacity: 0.8;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #a8ff78;
+        }
+        
+        .feature p {
+            opacity: 0.9;
+        }
+        
+        .tech-stack {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 3rem;
+            color: white;
+        }
+        
+        .tech-stack h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #a8ff78;
+            font-size: 1.5rem;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .tech-category h4 {
+            color: #78ffd6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tech-list {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .cta {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            margin: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background: rgba(168, 255, 120, 0.8);
+            color: #333;
+            border-color: rgba(168, 255, 120, 1);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(168, 255, 120, 1);
+        }
+        
+        .project-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 3rem;
+            color: white;
+            text-align: center;
+        }
+        
+        .project-info h3 {
+            color: #a8ff78;
+            margin-bottom: 1rem;
+        }
+        
+        .project-info p {
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(120, 255, 214, 0.8);
+            color: #333;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .logo {
+                font-size: 3rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .feature {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🌱 EcoTrace</div>
+            <div class="tagline">Developer Carbon Footprint Tracker</div>
+            <div class="description">
+                Real-time carbon footprint tracking for developers with scientific transparency and actionable insights.
+                Built for the modern developer workflow with GitHub integration and community features.
+            </div>
+        </header>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <h3>Real-time Tracking</h3>
+                <p>Live carbon footprint monitoring as you code, commit, and deploy. Get immediate feedback on your environmental impact.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔗</div>
+                <h3>GitHub Integration</h3>
+                <p>Automatic tracking via webhooks. Seamlessly integrates with your existing development workflow.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏆</div>
+                <h3>Community Leaderboards</h3>
+                <p>Rankings for carbon efficiency. Compete with other developers to build more sustainable software.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔬</div>
+                <h3>Scientific Transparency</h3>
+                <p>Full methodology documentation and calculation audit trails. Data you can trust and verify.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📈</div>
+                <h3>Carbon Insights</h3>
+                <p>Detailed analytics and visualizations to understand your carbon patterns and identify optimization opportunities.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Developer-first Design</h3>
+                <p>Built by developers, for developers. Smooth, responsive experience that integrates with your tools.</p>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <h3>🛠️ Technology Stack</h3>
+            <div class="tech-grid">
+                <div class="tech-category">
+                    <h4>Backend</h4>
+                    <div class="tech-list">Appwrite Cloud, TypeScript, Node.js, Redis</div>
+                </div>
+                <div class="tech-category">
+                    <h4>Frontend</h4>
+                    <div class="tech-list">Remix, React, Tailwind CSS v4, shadcn/ui, Zustand</div>
+                </div>
+                <div class="tech-category">
+                    <h4>Integrations</h4>
+                    <div class="tech-list">GitHub API, EPA eGRID, AWS Carbon API, Electricity Maps</div>
+                </div>
+                <div class="tech-category">
+                    <h4>Infrastructure</h4>
+                    <div class="tech-list">Appwrite Hosting, Real-time Database, Authentication, Functions</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-info">
+            <h3>🚀 Project Status</h3>
+            <p>EcoTrace is a comprehensive carbon tracking platform built for hackathon demonstration.</p>
+            <div class="status-badge">Live Demo Available</div>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+                This project showcases real-time carbon tracking, GitHub integration, developer analytics, 
+                and community features in a modern, responsive web application.
+            </p>
+        </div>
+
+        <div class="cta">
+            <a href="https://fra.cloud.appwrite.io/v1/storage/buckets/ecotrace-site/files/build-assets/download?project=68bf3f5e00183c7886b0" class="btn btn-primary">
+                📦 Download Full Application
+            </a>
+            <a href="https://github.com/ecotrace/ecotrace" class="btn">
+                📚 View Documentation
+            </a>
+        </div>
+
+        <footer>
+            <p>Built with 💚 for a sustainable future | EcoTrace 2024</p>
+            <p>Powered by Appwrite Cloud</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -7,11 +7,17 @@ import {
   Bell,
   Settings,
   RefreshCw,
-  ArrowLeft,
+  User,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react';
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
 import { Button } from '@shared/components/ui/button';
+import { Badge } from '@shared/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@shared/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@shared/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@shared/components/ui/tooltip';
 import { Separator } from '@shared/components/ui/separator';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -19,7 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function ChallengesLayout() {
-  const { user, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, isAuthenticated, checkAuth, signOut } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
@@ -40,96 +46,145 @@ export default function ChallengesLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-background/95 backdrop-blur-supports-[backdrop-filter]:bg-background/95 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
-              <Link to="/" className="flex items-center space-x-3">
-                <div className="bg-primary p-2 rounded-lg">
-                  <Leaf className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <span className="text-display-md font-bold">EcoTrace</span>
-              </Link>
-
-              <nav className="hidden md:flex space-x-6">
-                <Link
-                  to="/dashboard"
-                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/carbon-insights"
-                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Carbon Insights
-                </Link>
-                <Link
-                  to="/analytics"
-                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Analytics
-                </Link>
-                <Link
-                  to="/leaderboard"
-                  className="text-body-md text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Leaderboard
-                </Link>
-                <span className="text-body-md text-primary font-medium border-b-2 border-primary pb-1">
-                  Challenges
-                </span>
-              </nav>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-
-              <Button variant="ghost" size="icon">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-
-              <Button variant="ghost" size="icon">
-                <Bell className="h-4 w-4" />
-              </Button>
-
-              <Button variant="ghost" size="icon">
-                <Settings className="h-4 w-4" />
-              </Button>
-
-              <Separator orientation="vertical" className="h-6" />
-              
-              {user && (
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <div className="text-body-sm font-medium">
-                      {user.name || 'Developer'}
-                    </div>
-                    <div className="text-caption text-muted-foreground">
-                      @{(user as any).githubUsername || 'username'}
-                    </div>
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-background/95 backdrop-blur-supports-[backdrop-filter]:bg-background/95 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-8">
+                <Link to="/" className="flex items-center space-x-3">
+                  <div className="bg-primary p-2 rounded-lg">
+                    <Leaf className="h-6 w-6 text-primary-foreground" />
                   </div>
-                  {(user as any).avatar && (
-                    <img
-                      src={(user as any).avatar}
-                      alt="Profile"
-                      className="h-8 w-8 rounded-full ring-2 ring-primary/20"
-                    />
-                  )}
-                </div>
-              )}
+                  <span className="text-display-md text-foreground font-bold">EcoTrace</span>
+                </Link>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                <nav className="hidden md:flex items-center space-x-1">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-body-md font-medium"
+                  >
+                    <Link to="/dashboard">
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-body-md font-medium"
+                  >
+                    <Link to="/carbon-insights">
+                      Carbon Insights
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-body-md font-medium"
+                  >
+                    <Link to="/analytics">
+                      Analytics
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-body-md font-medium"
+                  >
+                    <Link to="/leaderboard">
+                      Leaderboard
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-body-md font-medium"
+                  >
+                    <Link to="/challenges" className="flex items-center space-x-2">
+                      Challenges
+                      <Badge variant="secondary" className="text-xs">
+                        Active
+                      </Badge>
+                    </Link>
+                  </Button>
+                </nav>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Refresh challenges data</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Bell className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Notifications</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                {user && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={(user as any).avatar} alt={user.name || 'User'} />
+                          <AvatarFallback>
+                            {user.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user.name || 'Developer'}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            @{(user as any).githubUsername || 'username'}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => signOut()}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <Outlet />
-    </div>
+        <Outlet />
+      </div>
+    </TooltipProvider>
   );
 }
