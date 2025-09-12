@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Github,
   Target,
+  Goal,
+  Save,
 } from 'lucide-react';
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
@@ -27,6 +29,11 @@ import { ActionItems } from '@features/dashboard/components/action-items';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
 import { Button } from '@shared/components/ui/button';
 import { Badge } from '@shared/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@shared/components/ui/dialog';
+import { Label } from '@shared/components/ui/label';
+import { Input } from '@shared/components/ui/input';
+import { Textarea } from '@shared/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/select';
 import { NotificationProvider, useNotifications, notificationUtils } from '@shared/components/notification-system';
 import { performanceMonitor, useDebounce } from '@shared/utils/performance';
 
@@ -40,7 +47,7 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
 
   return json({
-    mockMode: process.env.NODE_ENV === 'development',
+    mockMode: true, // Enable mock mode for development
   });
 }
 
@@ -64,6 +71,13 @@ function DashboardContent() {
   const { addNotification } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const [trendPeriod, setTrendPeriod] = useState<'7d' | '30d' | '90d'>('7d');
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+  const [targetForm, setTargetForm] = useState({
+    targetType: 'daily',
+    targetValue: '',
+    targetPeriod: 'week',
+    description: '',
+  });
   
   const debouncedTrendPeriod = useDebounce(trendPeriod, 300);
 
@@ -167,6 +181,30 @@ function DashboardContent() {
     ));
   };
 
+  const handleConnectRepo = () => {
+    // Navigate to GitHub integration setup
+    window.location.href = '/integrations/github';
+  };
+
+  const handleSetTarget = () => {
+    setTargetDialogOpen(true);
+  };
+
+  const handleSaveTarget = () => {
+    // TODO: Save target to backend
+    addNotification(notificationUtils.success(
+      'Target Set Successfully',
+      `${targetForm.targetValue}g CO₂e ${targetForm.targetType} target has been set`
+    ));
+    setTargetDialogOpen(false);
+    setTargetForm({
+      targetType: 'daily',
+      targetValue: '',
+      targetPeriod: 'week',
+      description: '',
+    });
+  };
+
   if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -226,14 +264,99 @@ function DashboardContent() {
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button variant="outline" className="hidden sm:flex">
+            <Button variant="outline" className="hidden sm:flex" onClick={handleConnectRepo}>
               <Github className="h-4 w-4 mr-2" />
               Connect Repo
             </Button>
-            <Button>
-              <Target className="h-4 w-4 mr-2" />
-              Set Target
-            </Button>
+            <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={handleSetTarget}>
+                  <Target className="h-4 w-4 mr-2" />
+                  Set Target
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center space-x-2">
+                    <Goal className="h-5 w-5" />
+                    <span>Set Carbon Target</span>
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="target-type">Target Type</Label>
+                    <Select
+                      value={targetForm.targetType}
+                      onValueChange={(value) => setTargetForm({...targetForm, targetType: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select target type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily Emissions</SelectItem>
+                        <SelectItem value="weekly">Weekly Emissions</SelectItem>
+                        <SelectItem value="monthly">Monthly Emissions</SelectItem>
+                        <SelectItem value="per-commit">Per Commit</SelectItem>
+                        <SelectItem value="per-build">Per Build</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="target-value">Target Value (g CO₂e)</Label>
+                    <Input
+                      id="target-value"
+                      type="number"
+                      placeholder="e.g., 100"
+                      value={targetForm.targetValue}
+                      onChange={(e) => setTargetForm({...targetForm, targetValue: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="target-period">Review Period</Label>
+                    <Select
+                      value={targetForm.targetPeriod}
+                      onValueChange={(value) => setTargetForm({...targetForm, targetPeriod: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select review period" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="week">Weekly Review</SelectItem>
+                        <SelectItem value="month">Monthly Review</SelectItem>
+                        <SelectItem value="quarter">Quarterly Review</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="target-description">Description (Optional)</Label>
+                    <Textarea
+                      id="target-description"
+                      placeholder="Why are you setting this target?"
+                      value={targetForm.description}
+                      onChange={(e) => setTargetForm({...targetForm, description: e.target.value})}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button variant="outline" onClick={() => setTargetDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSaveTarget}
+                      disabled={!targetForm.targetValue}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Target
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

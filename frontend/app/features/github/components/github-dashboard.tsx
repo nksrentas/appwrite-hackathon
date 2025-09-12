@@ -50,7 +50,9 @@ export function GitHubDashboard() {
     loadActivities,
     checkIntegrationHealth,
     disableRepositoryTracking,
-    testWebhooks
+    testWebhooks,
+    initiateConnection,
+    isConnecting
   } = useGitHubStore();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -118,6 +120,19 @@ export function GitHubDashboard() {
     }
   };
 
+  const handleConnectGitHub = async () => {
+    try {
+      const { authUrl } = await initiateConnection();
+      window.location.href = authUrl;
+    } catch (error) {
+      toast({
+        title: 'Connection Failed',
+        description: 'Failed to start GitHub connection. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (!isConnected) {
     return (
       <div className="container mx-auto max-w-4xl py-8 px-4 text-center">
@@ -128,8 +143,11 @@ export function GitHubDashboard() {
         <p className="text-gray-600 mb-4">
           Connect your GitHub account to start tracking repository carbon footprint
         </p>
-        <Button>
-          Connect GitHub
+        <Button 
+          onClick={handleConnectGitHub}
+          disabled={isConnecting}
+        >
+          {isConnecting ? 'Connecting...' : 'Connect GitHub'}
         </Button>
       </div>
     );

@@ -8,9 +8,9 @@ import type {
   GitHubPermissionScope
 } from '../types/github.types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
+const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   ? 'http://localhost:3002' 
-  : process.env.API_BASE_URL;
+  : '/api'; // Use relative path for production
 
 // Validation schemas
 const GitHubConnectionSchema = z.object({
@@ -59,8 +59,8 @@ const GitHubRepositorySchema = z.object({
 }).partial().required({ id: true, name: true, fullName: true });
 
 class GitHubService {
-  private readonly isDevelopment = process.env.NODE_ENV === 'development';
-  private readonly mockMode = process.env.GITHUB_MOCK_MODE === 'true';
+  private readonly isDevelopment = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  private readonly mockMode = false; // Disabled mock mode - use real API calls
 
   private async makeRequest<T>(
     endpoint: string,
@@ -120,7 +120,7 @@ class GitHubService {
   private getMockData<T>(endpoint: string, method: string): Promise<T> {
     // Mock data for development and testing
     const mockResponses: Record<string, any> = {
-      'GET:/oauth/initiate': {
+      'POST:/oauth/initiate': {
         authUrl: 'https://github.com/login/oauth/authorize?client_id=mock&state=mock-state',
         state: 'mock-state'
       },

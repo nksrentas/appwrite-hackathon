@@ -9,9 +9,10 @@ if (typeof window !== 'undefined') {
 
   client.setEndpoint(endpoint).setProject(projectId);
 } else {
+  // Server-side initialization - use fallback values for now
   client
-    .setEndpoint(process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1')
-    .setProject(process.env.APPWRITE_PROJECT_ID || '');
+    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setProject('');
 }
 
 export const account = new Account(client);
