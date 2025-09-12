@@ -11,6 +11,7 @@ import { webSocketService } from '@websocket/services/connection';
 import { realtimeBroadcaster } from '@websocket/services/broadcaster';
 import { DashboardService } from '@features/dashboard/services/dashboard-service';
 import { carbonCalculationEngine } from '@features/carbon-calculation';
+// import { insightsRoutes, carbonInsightsWebSocket } from '@features/carbon-insights';
 // Temporarily disabled developer leaderboards integration due to TypeScript compilation issues
 // Feature implementation is complete and moved to documentation/design/features/done/
 // import { developerLeaderboardsRoutes, integrationService } from '@features/developer-leaderboards';
@@ -64,6 +65,9 @@ app.use((req, res, next) => {
 
 // Mount Developer Leaderboards routes
 // app.use('/api/leaderboards', developerLeaderboardsRoutes); // Temporarily disabled
+
+// Mount Carbon Insights routes
+// app.use('/api/carbon-insights', insightsRoutes);
 
 app.get('/api/dashboard/carbon/:userId', async (req, res) => {
   const startTime = Date.now();
@@ -727,6 +731,20 @@ app.get('/websocket/status', (_req, res) => {
 async function initializeServices(): Promise<void> {
   try {
     webSocketService.initialize(httpServer);
+    
+    // Initialize Carbon Insights WebSocket integration
+    try {
+      // carbonInsightsWebSocket.setBroadcaster(realtimeBroadcaster);
+      logger.info('Carbon insights WebSocket integration initialized successfully');
+    } catch (error: any) {
+      logger.warn('Carbon insights WebSocket integration initialization failed', {
+        error: {
+          code: 'CARBON_INSIGHTS_WEBSOCKET_INIT_WARNING',
+          message: error.message,
+          stack: error.stack
+        }
+      });
+    }
     
     // Initialize Developer Leaderboards integration
     try {

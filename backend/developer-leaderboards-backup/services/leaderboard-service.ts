@@ -1,7 +1,7 @@
 import { Databases, Query } from 'node-appwrite';
 import { client } from '@shared/config/appwrite';
 import { logger } from '@shared/utils/logger';
-import { cacheService } from '@shared/utils/cache';
+import { cacheService } from '@services/cache-service';
 import { 
   LeaderboardEntry, 
   LeaderboardRequest, 
@@ -84,6 +84,7 @@ export class LeaderboardService {
       const { category, period, contextAware, privacyFiltering } = options;
 
       logger.info('Calculating leaderboard', { 
+        category, period,
         metadata: { options, limit, offset }
       });
 
@@ -357,9 +358,9 @@ export class LeaderboardService {
       await this.invalidateCache(category, period);
 
       logger.info('Rankings recalculated successfully', { 
+        category, 
+        period,
         metadata: { 
-          category, 
-          period, 
           entriesProcessed: response.documents.length 
         }
       });

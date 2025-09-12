@@ -7,12 +7,17 @@ import {
   Bell,
   RefreshCw,
   Settings,
+  TrendingUp,
+  BarChart3,
+  Target,
+  Clock,
 } from 'lucide-react';
 
 import { useAuthStore } from '@features/auth/stores/auth.store';
-import { useDashboardStore } from '@features/dashboard/stores/dashboard.store';
+import { useCarbonInsightsStore } from '@features/carbon-insights/stores/carbon-insights.store';
 import { ConnectionStatus } from '@features/dashboard/components/connection-status';
 import { Button } from '@shared/components/ui/button';
+import { Badge } from '@shared/components/ui/badge';
 import { notificationUtils, useNotifications } from '@shared/components/notification-system';
 import { performanceMonitor } from '@shared/utils/performance';
 
@@ -20,17 +25,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({});
 }
 
-export default function DashboardLayout() {
+export default function CarbonInsightsLayout() {
   const { user, isAuthenticated, checkAuth } = useAuthStore();
   const {
-    metrics,
+    insights,
     isLoading,
     isConnected,
     error,
     refreshData,
     subscribeToRealTimeUpdates,
     clearError,
-  } = useDashboardStore();
+  } = useCarbonInsightsStore();
 
   const { addNotification } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
@@ -39,12 +44,18 @@ export default function DashboardLayout() {
     checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      subscribeToRealTimeUpdates(user.$id);
+    }
+  }, [isAuthenticated, user, subscribeToRealTimeUpdates]);
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-carbon-900">Authentication Required</h1>
-          <p className="text-carbon-600">Please sign in to access your dashboard.</p>
+          <p className="text-carbon-600">Please sign in to access carbon insights.</p>
           <Link to="/">
             <Button>Go to Sign In</Button>
           </Link>
@@ -57,23 +68,23 @@ export default function DashboardLayout() {
     if (!user) return;
 
     setRefreshing(true);
-    performanceMonitor.startMark('dashboard-refresh');
+    performanceMonitor.startMark('carbon-insights-refresh');
     
     try {
       await refreshData(user.$id);
       addNotification?.(notificationUtils.success(
-        'Dashboard Updated',
-        'Latest data has been loaded'
+        'Insights Updated',
+        'Latest carbon insights have been loaded'
       ));
     } catch (error) {
       console.error('Refresh failed:', error);
       addNotification?.(notificationUtils.error(
         'Refresh Failed',
-        'Could not load latest data. Please try again.'
+        'Could not load latest carbon insights. Please try again.'
       ));
     } finally {
       setRefreshing(false);
-      performanceMonitor.endMark('dashboard-refresh');
+      performanceMonitor.endMark('carbon-insights-refresh');
     }
   };
 
@@ -83,7 +94,7 @@ export default function DashboardLayout() {
       subscribeToRealTimeUpdates(user.$id);
       addNotification?.(notificationUtils.info(
         'Reconnecting...',
-        'Attempting to restore real-time updates'
+        'Attempting to restore real-time carbon insights updates'
       ));
     }
   };
@@ -104,13 +115,13 @@ export default function DashboardLayout() {
               <nav className="hidden md:flex space-x-6">
                 <Link
                   to="/dashboard"
-                  className="text-body-md text-primary-600 font-medium border-b-2 border-primary-500 pb-1"
+                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/carbon-insights"
-                  className="text-body-md text-carbon-600 hover:text-carbon-900 transition-colors"
+                  className="text-body-md text-primary-600 font-medium border-b-2 border-primary-500 pb-1"
                 >
                   Carbon Insights
                 </Link>
@@ -139,10 +150,17 @@ export default function DashboardLayout() {
               <ConnectionStatus
                 isConnected={isConnected}
                 isLoading={isLoading}
-                lastUpdated={metrics?.lastUpdated}
+                lastUpdated={insights?.lastUpdated}
                 errorMessage={error || undefined}
                 onReconnect={handleReconnect}
               />
+
+              {insights?.confidence && (
+                <Badge variant={insights.confidence === 'high' ? 'default' : 'secondary'}>
+                  <Target className="h-3 w-3 mr-1" />
+                  {insights.confidence.charAt(0).toUpperCase() + insights.confidence.slice(1)} Confidence
+                </Badge>
+              )}
 
               <Button
                 variant="ghost"
